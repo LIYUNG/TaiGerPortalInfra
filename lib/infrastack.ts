@@ -8,7 +8,7 @@ import {
     ServicePrincipal
 } from "aws-cdk-lib/aws-iam";
 import { Bucket } from "aws-cdk-lib/aws-s3";
-import { AWS_ACCOUNT, tenfoldAIRoleArn } from "../configuration";
+import { AWS_ACCOUNT, tenfoldAIAssumeRoleArn, tenfoldAIRoleArn } from "../configuration";
 
 interface InfraStackProps extends cdk.StackProps {
     stageName: string;
@@ -34,6 +34,7 @@ export class InfraStack extends cdk.Stack {
         if (props.isProd) {
             assumedBy = new CompositePrincipal(
                 new ServicePrincipal("ec2.amazonaws.com"),
+                new ArnPrincipal(tenfoldAIAssumeRoleArn),
                 new ArnPrincipal(tenfoldAIRoleArn)
             );
         } else {
