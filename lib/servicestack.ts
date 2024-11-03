@@ -22,9 +22,11 @@ export class ServiceStack extends cdk.Stack {
         if (!props.env?.region) {
             throw new Error("Region is required");
         }
+        const lambdaAppDir = path.resolve(__dirname, "../lambda/cron-jobs");
 
         const cronJobsLambda = new NodejsFunction(this, `Cron-Jobs-${props.stageName}`, {
-            entry: "./lambda/cron-jobs/index.js",
+            projectRoot: lambdaAppDir,
+            entry: path.join(lambdaAppDir, "index.js"),
             handler: "handler",
             runtime: Runtime.NODEJS_18_X,
             memorySize: 512,
