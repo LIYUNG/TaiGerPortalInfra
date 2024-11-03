@@ -57,7 +57,7 @@ export class ServiceStack extends cdk.Stack {
         if (!props.isProd) {
             const rule1 = new Rule(this, `CronRule1-${props.stageName}`, {
                 schedule: Schedule.cron({
-                    minute: "28", // Testing
+                    minute: "40", // Testing
                     hour: "*",
                     day: "*",
                     month: "*",

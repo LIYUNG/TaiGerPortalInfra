@@ -34,7 +34,7 @@ async function MongoDBDataPipelineDailySnapshot() {
 
             // Upload JSON data to S3
             const uploadParams = {
-                Bucket: props.env.EXTERNAL_S3_BUCKET_NAME,
+                Bucket: process.env.EXTERNAL_S3_BUCKET_NAME,
                 Key: fileName,
                 Body: jsonData,
                 ContentType: "application/json"
@@ -43,7 +43,7 @@ async function MongoDBDataPipelineDailySnapshot() {
             await s3Client.send(putObjectCommand);
 
             console.log(
-                `Successfully backed up collection ${collectionName} to ${fileName} in bucket ${props.env.EXTERNAL_S3_BUCKET_NAME}`
+                `Successfully backed up collection ${collectionName} to ${fileName} in bucket ${process.env.EXTERNAL_S3_BUCKET_NAME}`
             );
         }
     } catch (error) {
