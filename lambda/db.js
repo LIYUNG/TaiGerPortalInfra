@@ -15,8 +15,7 @@ async function getMongoDbUri() {
         const secretValue = await secretsManagerClient.send(command);
 
         if (secretValue && secretValue.SecretString) {
-            const secret = JSON.parse(secretValue.SecretString);
-            return secret.MONGODB_URI; // Replace this key with the exact key in your secret
+            return secretValue.SecretString; // Replace this key with the exact key in your secret
         }
         throw new Error("MONGODB_URI not found in secret.");
     } catch (error) {
@@ -31,10 +30,7 @@ async function connectToDatabase() {
         return cachedDb;
     }
     const mongoUri = await getMongoDbUri();
-    const client = new MongoClient(mongoUri, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true
-    });
+    const client = new MongoClient(mongoUri);
     await client.connect();
     cachedDb = client.db(mongoDBName);
     return cachedDb;
