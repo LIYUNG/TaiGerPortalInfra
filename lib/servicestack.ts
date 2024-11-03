@@ -6,6 +6,7 @@ import { Runtime } from "aws-cdk-lib/aws-lambda";
 import { Construct } from "constructs";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { InfraStack } from "./infrastack";
+import { Secret } from "aws-cdk-lib/aws-secretsmanager";
 
 interface ServiceStackProps extends cdk.StackProps {
     stageName: string;
@@ -26,6 +27,12 @@ export class ServiceStack extends cdk.Stack {
         }
         const lambdaAppDir = path.resolve(__dirname, "../lambda/cron-jobs");
 
+        const secret = Secret.fromSecretNameV2(
+            this,
+            `mongodb-uri-${props.stageName}`,
+            props.mongodbUriSecretName
+        );
+
         const cronJobsLambda = new NodejsFunction(this, `Cron-Jobs-${props.stageName}`, {
             entry: path.join(lambdaAppDir, "index.js"),
             handler: "handler",
@@ -41,6 +48,8 @@ export class ServiceStack extends cdk.Stack {
             }
         });
 
+        // Grant Lambda permission to read the secret
+        secret.grantRead(cronJobsLambda);
         props.infraStack.externalBucket.grantPut(cronJobsLambda);
 
         // Define the first cron job (e.g., jobType: 'job1')
