@@ -20,11 +20,12 @@ interface InfraStackProps extends cdk.StackProps {
 }
 
 export class InfraStack extends cdk.Stack {
+    public externalBucket: Bucket;
     constructor(scope: Construct, id: string, props: InfraStackProps) {
         super(scope, id, props);
 
         // 1. Create the S3 Bucket
-        const bucket = new Bucket(this, `ExternalBucket-${props.stageName}`, {
+        this.externalBucket = new Bucket(this, `ExternalBucket-${props.stageName}`, {
             bucketName: props.externalS3BucketName,
             versioned: false,
             removalPolicy: cdk.RemovalPolicy.DESTROY // For testing; in production, consider RETAIN
@@ -53,7 +54,7 @@ export class InfraStack extends cdk.Stack {
         crossAccountRole.addToPolicy(
             new PolicyStatement({
                 actions: ["s3:GetObject"],
-                resources: [`${bucket.bucketArn}/tenfold-ai-folder/*`]
+                resources: [`${this.externalBucket.bucketArn}/tenfold-ai-folder/*`]
             })
         );
 
@@ -61,7 +62,7 @@ export class InfraStack extends cdk.Stack {
         crossAccountRole.addToPolicy(
             new PolicyStatement({
                 actions: ["s3:ListBucket"],
-                resources: [bucket.bucketArn],
+                resources: [this.externalBucket.bucketArn],
                 conditions: {
                     StringLike: {
                         "s3:prefix": "tenfold-ai-folder/*"

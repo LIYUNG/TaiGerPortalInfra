@@ -33,7 +33,10 @@ export class PipelineAppStage extends Stage {
             isProd: props.isProd,
             mongodbUriSecretName: props.mongodbUriSecretName,
             mongoDBName: props.mongoDBName,
-            externalS3BucketName: props.externalS3BucketName
+            externalS3BucketName: props.externalS3BucketName,
+            infraStack
         });
+
+        serviceStack.addDependency(infraStack);
     }
 }
