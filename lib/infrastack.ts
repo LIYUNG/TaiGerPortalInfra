@@ -26,7 +26,7 @@ export class InfraStack extends cdk.Stack {
         // 1. Create the S3 Bucket
         const bucket = new Bucket(this, `ExternalBucket-${props.stageName}`, {
             bucketName: props.externalS3BucketName,
-            versioned: true,
+            versioned: false,
             removalPolicy: cdk.RemovalPolicy.DESTROY // For testing; in production, consider RETAIN
         });
         // Create the IAM Role in your account for the external account to assume
