@@ -56,5 +56,18 @@ export class InfraStack extends cdk.Stack {
                 resources: [`${bucket.bucketArn}/tenfold-ai-folder/*`]
             })
         );
+
+        // 3. Grant ListBucket permission for the prefix
+        crossAccountRole.addToPolicy(
+            new PolicyStatement({
+                actions: ["s3:ListBucket"],
+                resources: [bucket.bucketArn],
+                conditions: {
+                    StringLike: {
+                        "s3:prefix": "tenfold-ai-folder/*"
+                    }
+                }
+            })
+        );
     }
 }
