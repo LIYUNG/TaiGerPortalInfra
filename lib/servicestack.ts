@@ -2,7 +2,7 @@ import * as cdk from "aws-cdk-lib";
 import path from "path";
 import { Rule, RuleTargetInput, Schedule } from "aws-cdk-lib/aws-events";
 import { LambdaFunction } from "aws-cdk-lib/aws-events-targets";
-import { Code, Runtime } from "aws-cdk-lib/aws-lambda";
+import { Runtime } from "aws-cdk-lib/aws-lambda";
 import { Construct } from "constructs";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 
@@ -24,10 +24,10 @@ export class ServiceStack extends cdk.Stack {
         }
 
         const cronJobsLambda = new NodejsFunction(this, `Cron-Jobs-${props.stageName}`, {
-            runtime: Runtime.NODEJS_18_X,
-            entry: path.join(__dirname, "..", "lambda/cron-jobs/index.js"), // Use the zip artifact from CodeBuild
-            memorySize: 512,
+            entry: path.join(__dirname, "../lambda/cron-jobs/index.js"),
             handler: "handler",
+            runtime: Runtime.NODEJS_18_X,
+            memorySize: 512,
             timeout: cdk.Duration.seconds(600) // Set timeout here (up to 600 seconds)
             // Adding environment variable for the S3 bucket name
             // environment: {
