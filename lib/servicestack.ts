@@ -24,7 +24,7 @@ export class ServiceStack extends cdk.Stack {
         }
 
         const cronJobsLambda = new NodejsFunction(this, `Cron-Jobs-${props.stageName}`, {
-            entry: path.join(__dirname, "../lambda/cron-jobs/index.js"),
+            entry: "./lambda/cron-jobs/index.js",
             handler: "handler",
             runtime: Runtime.NODEJS_18_X,
             memorySize: 512,
