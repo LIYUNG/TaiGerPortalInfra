@@ -49,8 +49,7 @@ async function MongoDBDataPipelineDailySnapshot() {
             const jsonData = JSON.stringify(transformedData);
 
             // Create a unique filename with the timestamp for each collection
-            const timestamp = new Date().toISOString();
-            const fileName = `test-${year}-${month}-${day}/${collectionName}_${timestamp}.json`;
+            const fileName = `test-${year}-${month}-${day}/${collectionName}.json`;
 
             // Upload JSON data to S3
             const uploadParams = {
