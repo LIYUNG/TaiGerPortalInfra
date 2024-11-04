@@ -4,7 +4,7 @@ const { s3Client } = require("../../aws");
 const { transformDocument } = require("../../common/utils");
 
 const allowList = ["communications", "courses", "programs", "users"];
-
+const tenfoldFolder = "tenfold-ai-folder";
 async function MongoDBDataPipelineDailySnapshot() {
     console.log("Executing tasks for Job MongoDBDataPipelineDailySnapshot...");
     try {
@@ -51,7 +51,7 @@ async function MongoDBDataPipelineDailySnapshot() {
                 const jsonData = JSON.stringify(transformedData);
 
                 // Create a unique filename with the timestamp for each collection
-                const fileName = `${year}-${month}-${day}/${collectionName}.json`;
+                const fileName = `${tenfoldFolder}/${year}-${month}-${day}/${collectionName}.json`;
 
                 // Upload JSON data to S3
                 const uploadParams = {
