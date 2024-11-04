@@ -64,42 +64,44 @@ export class ServiceStack extends cdk.Stack {
         bucket.grantPut(cronJobsLambda);
 
         // Define the first cron job (e.g., jobType: 'job1')
-        // TODO: reverse condition when tested.
-
-        const rule1 = new Rule(this, `CronRule1-${props.stageName}`, {
-            schedule: Schedule.cron({
-                minute: "25", // Testing
-                hour: "2",
-                day: "*",
-                month: "*",
-                year: "*"
-            })
-        });
-        rule1.addTarget(
-            new LambdaFunction(cronJobsLambda, {
-                event: RuleTargetInput.fromObject({
-                    jobType: "MongoDBDataPipelineDailySnapshot"
+        // Release:
+        if (props.isProd) {
+            const rule1 = new Rule(this, `CronRule1-${props.stageName}`, {
+                schedule: Schedule.cron({
+                    minute: "25", // Testing
+                    hour: "2",
+                    day: "*",
+                    month: "*",
+                    year: "*"
                 })
-            })
-        );
+            });
+            rule1.addTarget(
+                new LambdaFunction(cronJobsLambda, {
+                    event: RuleTargetInput.fromObject({
+                        jobType: "MongoDBDataPipelineDailySnapshot"
+                    })
+                })
+            );
 
-        // Define the second cron job (e.g., jobType: 'job2')
-        const rule2 = new Rule(this, `CronRule2-${props.stageName}`, {
-            schedule: Schedule.cron({
-                minute: "25", // Testing
-                hour: "3",
-                day: "*",
-                month: "*",
-                year: "*"
-            })
-        });
+            // Define the second cron job (e.g., jobType: 'job2')
+            const rule2 = new Rule(this, `CronRule2-${props.stageName}`, {
+                schedule: Schedule.cron({
+                    minute: "25", // Testing
+                    hour: "3",
+                    day: "*",
+                    month: "*",
+                    year: "*"
+                })
+            });
 
-        rule2.addTarget(
-            new LambdaFunction(cronJobsLambda, {
-                event: RuleTargetInput.fromObject({ jobType: "MongoDBDatabaseDailySnapshot" })
-            })
-        );
+            rule2.addTarget(
+                new LambdaFunction(cronJobsLambda, {
+                    event: RuleTargetInput.fromObject({ jobType: "MongoDBDatabaseDailySnapshot" })
+                })
+            );
+        }
 
+        // Testing sections
         if (!props.isProd) {
             // Define the second cron job (e.g., jobType: 'job2')
             const rule2 = new Rule(this, `CronRule3-${props.stageName}`, {
