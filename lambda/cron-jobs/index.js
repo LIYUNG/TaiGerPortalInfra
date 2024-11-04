@@ -14,6 +14,9 @@ exports.handler = async (event) => {
         } else if (jobType === "MongoDBDatabaseDailySnapshot") {
             console.log("Running Job MongoDBDatabaseDailySnapshot");
             await MongoDBDatabaseDailySnapshot();
+        } else if (jobType === "MeetingReminder") {
+            console.log("Running Job MeetingReminder");
+            await MongoDBDatabaseDailySnapshot();
         } else {
             console.warn(`No matching job for jobType: ${jobType}`);
         }

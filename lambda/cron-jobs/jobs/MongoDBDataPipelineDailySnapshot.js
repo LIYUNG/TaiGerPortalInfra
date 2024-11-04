@@ -3,6 +3,8 @@ const { connectToDatabase } = require("../../db");
 const { s3Client } = require("../../aws");
 const { transformDocument } = require("../../common/utils");
 
+const allowList = ["communications", "courses", "programs", "users"];
+
 async function MongoDBDataPipelineDailySnapshot() {
     console.log("Executing tasks for Job MongoDBDataPipelineDailySnapshot...");
     try {
@@ -19,9 +21,7 @@ async function MongoDBDataPipelineDailySnapshot() {
 
         // Iterate over each collection and back up its data to S3
         const backupPromises = collections
-            .filter((collectionInfo) =>
-                ["communications", "courses", "programs", "users"].includes(collectionInfo.name)
-            )
+            .filter((collectionInfo) => allowList.includes(collectionInfo.name))
             .map(async (collectionInfo) => {
                 const collectionName = collectionInfo.name;
                 const collection = db.collection(collectionName);
@@ -51,7 +51,7 @@ async function MongoDBDataPipelineDailySnapshot() {
                 const jsonData = JSON.stringify(transformedData);
 
                 // Create a unique filename with the timestamp for each collection
-                const fileName = `test-${year}-${month}-${day}/${collectionName}.json`;
+                const fileName = `${year}-${month}-${day}/${collectionName}.json`;
 
                 // Upload JSON data to S3
                 const uploadParams = {
