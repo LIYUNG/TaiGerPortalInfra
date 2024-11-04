@@ -4,8 +4,8 @@ export const CRON_JOBS: CronJobConfig[] = [
     {
         jobType: "MongoDBDataPipelineDailySnapshot",
         schedule: {
-            minute: "58",
-            hour: "21",
+            minute: "10",
+            hour: "1",
             day: "*",
             month: "*",
             year: "*"
@@ -15,8 +15,8 @@ export const CRON_JOBS: CronJobConfig[] = [
     {
         jobType: "MongoDBDatabaseDailySnapshot",
         schedule: {
-            minute: "58",
-            hour: "21",
+            minute: "25",
+            hour: "1",
             day: "*",
             month: "*",
             year: "*"
