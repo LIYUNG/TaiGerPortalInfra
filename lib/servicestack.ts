@@ -68,8 +68,8 @@ export class ServiceStack extends cdk.Stack {
         if (!props.isProd) {
             const rule1 = new Rule(this, `CronRule1-${props.stageName}`, {
                 schedule: Schedule.cron({
-                    minute: "5", // Testing
-                    hour: "21",
+                    minute: "25", // Testing
+                    hour: "20",
                     day: "*",
                     month: "*",
                     year: "*"
@@ -86,8 +86,8 @@ export class ServiceStack extends cdk.Stack {
             // Define the second cron job (e.g., jobType: 'job2')
             const rule2 = new Rule(this, `CronRule2-${props.stageName}`, {
                 schedule: Schedule.cron({
-                    minute: "5", // Testing
-                    hour: "21",
+                    minute: "25", // Testing
+                    hour: "20",
                     day: "*",
                     month: "*",
                     year: "*"
