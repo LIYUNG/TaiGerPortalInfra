@@ -1,4 +1,4 @@
-const { MongoDBDatabaseDailySnapshot } = require("./jobs/MongoDBDataBaseDailySnapshot");
+const { MongoDBDatabaseDailySnapshot } = require("./jobs/MongoDBDatabaseDailySnapshot");
 const { MongoDBDataPipelineDailySnapshot } = require("./jobs/MongoDBDataPipelineDailySnapshot");
 
 exports.handler = async (event) => {
