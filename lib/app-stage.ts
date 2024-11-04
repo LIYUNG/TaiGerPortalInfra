@@ -10,6 +10,7 @@ interface DeploymentkProps extends StageProps {
     mongodbUriSecretName: string;
     mongoDBName: string;
     externalS3BucketName: string;
+    internalMongodbS3BucketName: string;
 }
 
 export class PipelineAppStage extends Stage {
@@ -34,6 +35,7 @@ export class PipelineAppStage extends Stage {
             mongodbUriSecretName: props.mongodbUriSecretName,
             mongoDBName: props.mongoDBName,
             externalS3BucketName: props.externalS3BucketName,
+            internalMongodbS3BucketName: props.internalMongodbS3BucketName,
             infraStack
         });
 

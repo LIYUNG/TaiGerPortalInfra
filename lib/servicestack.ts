@@ -7,6 +7,7 @@ import { Construct } from "constructs";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { InfraStack } from "./infrastack";
 import { Secret } from "aws-cdk-lib/aws-secretsmanager";
+import { Bucket } from "aws-cdk-lib/aws-s3";
 
 interface ServiceStackProps extends cdk.StackProps {
     stageName: string;
@@ -15,6 +16,7 @@ interface ServiceStackProps extends cdk.StackProps {
     mongodbUriSecretName: string;
     mongoDBName: string;
     externalS3BucketName: string;
+    internalMongodbS3BucketName: string;
     infraStack: InfraStack;
 }
 
@@ -26,6 +28,12 @@ export class ServiceStack extends cdk.Stack {
             throw new Error("Region is required");
         }
         const lambdaAppDir = path.resolve(__dirname, "../lambda/cron-jobs");
+
+        const bucket = Bucket.fromBucketName(
+            this,
+            `mongodb-backup-${props.stageName}`,
+            props.internalMongodbS3BucketName
+        );
 
         const secret = Secret.fromSecretNameV2(
             this,
@@ -40,10 +48,12 @@ export class ServiceStack extends cdk.Stack {
             memorySize: 512,
             timeout: cdk.Duration.seconds(600), // Set timeout here (up to 600 seconds)
             // Adding environment variable for the S3 bucket name
+            reservedConcurrentExecutions: 10,
             environment: {
                 MONGODB_URI_SECRET_NAME: props.mongodbUriSecretName,
                 MONGODB_NAME: props.mongoDBName,
                 EXTERNAL_S3_BUCKET_NAME: props.externalS3BucketName,
+                INTERNAL_MONGODB_S3_BUCKET_NAME: props.internalMongodbS3BucketName,
                 REGION: props.env.region
             }
         });
@@ -51,14 +61,15 @@ export class ServiceStack extends cdk.Stack {
         // Grant Lambda permission to read the secret
         secret.grantRead(cronJobsLambda);
         props.infraStack.externalBucket.grantPut(cronJobsLambda);
+        bucket.grantPut(cronJobsLambda);
 
         // Define the first cron job (e.g., jobType: 'job1')
         // TODO: reverse condition when tested.
         if (!props.isProd) {
             const rule1 = new Rule(this, `CronRule1-${props.stageName}`, {
                 schedule: Schedule.cron({
-                    minute: "20", // Testing
-                    hour: "12",
+                    minute: "5", // Testing
+                    hour: "21",
                     day: "*",
                     month: "*",
                     year: "*"
@@ -75,8 +86,8 @@ export class ServiceStack extends cdk.Stack {
             // Define the second cron job (e.g., jobType: 'job2')
             const rule2 = new Rule(this, `CronRule2-${props.stageName}`, {
                 schedule: Schedule.cron({
-                    minute: "30",
-                    hour: "14",
+                    minute: "5", // Testing
+                    hour: "21",
                     day: "*",
                     month: "*",
                     year: "*"
@@ -85,7 +96,7 @@ export class ServiceStack extends cdk.Stack {
 
             rule2.addTarget(
                 new LambdaFunction(cronJobsLambda, {
-                    event: RuleTargetInput.fromObject({ jobType: "job2" })
+                    event: RuleTargetInput.fromObject({ jobType: "MongoDBDatabaseDailySnapshot" })
                 })
             );
         }

@@ -19,7 +19,8 @@ export const STAGES = [
         domainStage: DomainStage.Beta,
         mongodbUriSecretName: "beta/taigerportal/mongodb",
         mongoDBName: "TaiGer",
-        externalS3BucketName: `taiger-external-bucket-${DomainStage.Beta}`
+        externalS3BucketName: `taiger-external-bucket-${DomainStage.Beta}`,
+        internalMongodbS3BucketName: "taiger-file-storage-dev-mongodb-backup"
     },
     {
         stageName: Stage.Prod_NA,
@@ -28,6 +29,7 @@ export const STAGES = [
         domainStage: DomainStage.Prod,
         mongodbUriSecretName: "prod/taigerportal/mongodb",
         mongoDBName: "TaiGer_Prod",
-        externalS3BucketName: `taiger-external-bucket-${DomainStage.Prod}`
+        externalS3BucketName: `taiger-external-bucket-${DomainStage.Prod}`,
+        internalMongodbS3BucketName: "taiger-file-storage-production-mongodb-backup"
     }
 ];

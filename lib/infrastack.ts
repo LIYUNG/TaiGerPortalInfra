@@ -53,7 +53,7 @@ export class InfraStack extends cdk.Stack {
         // 2. Grant GetObject permission for /external-folder/* to the external IAM role
         crossAccountRole.addToPolicy(
             new PolicyStatement({
-                actions: ["s3:GetObject"],
+                actions: ["s3:GetObject", "s3:GetObjectVersion"],
                 resources: [`${this.externalBucket.bucketArn}/tenfold-ai-folder/*`]
             })
         );
@@ -61,11 +61,18 @@ export class InfraStack extends cdk.Stack {
         // 3. Grant ListBucket permission for the prefix
         crossAccountRole.addToPolicy(
             new PolicyStatement({
-                actions: ["s3:ListBucket"],
+                actions: [
+                    "s3:ListBucket",
+                    "s3:GetBucketLocation", // Often required for SDK operations
+                    "s3:ListBucketVersions"
+                ],
                 resources: [this.externalBucket.bucketArn],
                 conditions: {
                     StringLike: {
-                        "s3:prefix": "tenfold-ai-folder/*"
+                        "s3:prefix": [
+                            "tenfold-ai-folder/*",
+                            "tenfold-ai-folder" // Include the prefix itself
+                        ]
                     }
                 }
             })

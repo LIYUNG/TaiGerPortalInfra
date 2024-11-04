@@ -1,3 +1,4 @@
+const { MongoDBDatabaseDailySnapshot } = require("./jobs/MongoDBDataBaseDailySnapshot");
 const { MongoDBDataPipelineDailySnapshot } = require("./jobs/MongoDBDataPipelineDailySnapshot");
 
 exports.handler = async (event) => {
@@ -10,10 +11,9 @@ exports.handler = async (event) => {
         if (jobType === "MongoDBDataPipelineDailySnapshot") {
             console.log("Running Job MongoDBDataPipelineDailySnapshot");
             await MongoDBDataPipelineDailySnapshot();
-        } else if (jobType === "job2") {
-            console.log("Running Job 2");
-            // Add your logic for Job 2 here
-            await runJob2();
+        } else if (jobType === "MongoDBDatabaseDailySnapshot") {
+            console.log("Running Job MongoDBDatabaseDailySnapshot");
+            await MongoDBDatabaseDailySnapshot();
         } else {
             console.warn(`No matching job for jobType: ${jobType}`);
         }
@@ -27,10 +27,3 @@ exports.handler = async (event) => {
         body: JSON.stringify({ message: `Job ${jobType} completed` })
     };
 };
-
-// Example function for Job 2
-async function runJob2() {
-    // Simulate some task for Job 2
-    console.log("Executing tasks for Job 2...");
-    // Add more logic as needed
-}

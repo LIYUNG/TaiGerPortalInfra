@@ -56,7 +56,8 @@ export class TaiGerPortalInfraStack extends cdk.Stack {
                 isProd,
                 mongodbUriSecretName,
                 mongoDBName,
-                externalS3BucketName
+                externalS3BucketName,
+                internalMongodbS3BucketName
             }) => {
                 const stage = new PipelineAppStage(this, `${stageName}-Stage`, {
                     env,
@@ -65,7 +66,8 @@ export class TaiGerPortalInfraStack extends cdk.Stack {
                     isProd,
                     mongodbUriSecretName,
                     mongoDBName,
-                    externalS3BucketName
+                    externalS3BucketName,
+                    internalMongodbS3BucketName
                 });
                 pipeline.addStage(stage);
             }
