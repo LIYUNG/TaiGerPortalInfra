@@ -45,7 +45,7 @@ async function MongoDBDataPipelineDailySnapshot() {
             // Fetch all documents in the collection
             const documents = await collection.find({}).toArray();
             // Transform each document
-            const transformedData = documents.map((doc) => transformDocument(doc.toObject()));
+            const transformedData = documents.map((doc) => transformDocument(doc));
             const jsonData = JSON.stringify(transformedData);
 
             // Create a unique filename with the timestamp for each collection
