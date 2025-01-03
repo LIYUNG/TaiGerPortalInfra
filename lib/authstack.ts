@@ -13,10 +13,10 @@ export class AuthStack extends cdk.Stack {
         super(scope, id, props);
         // Create the Cognito User Pool
         const userPool = new UserPool(this, `UserPool-${props.stageName}`, {
-            selfSignUpEnabled: true,
+            selfSignUpEnabled: false, // Disable self-sign-up via username/password
             signInAliases: {
-                username: true,
-                email: true
+                username: false, // Disable sign-in via username
+                email: false // Disable sign-in via email
             },
             autoVerify: { email: true },
             passwordPolicy: {

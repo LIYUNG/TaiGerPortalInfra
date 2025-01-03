@@ -28,7 +28,13 @@ export class InfraStack extends cdk.Stack {
         this.externalBucket = new Bucket(this, `ExternalBucket-${props.stageName}`, {
             bucketName: props.externalS3BucketName,
             versioned: false,
-            removalPolicy: cdk.RemovalPolicy.DESTROY // For testing; in production, consider RETAIN
+            removalPolicy: cdk.RemovalPolicy.DESTROY, // For testing; in production, consider RETAIN
+            lifecycleRules: [
+                {
+                    expiration: cdk.Duration.days(90), // Objects expire after 90 days (3 months)
+                    enabled: true // Enable the lifecycle rule
+                }
+            ]
         });
         // Create the IAM Role in your account for the external account to assume
         let assumedBy: CompositePrincipal;
