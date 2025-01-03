@@ -22,6 +22,17 @@ export const CRON_JOBS: CronJobConfig[] = [
             year: "*"
         },
         description: "Daily snapshot of MongoDB database"
+    },
+    {
+        jobType: "AssignEditorTasksReminderEmails",
+        schedule: {
+            minute: "30",
+            hour: "1",
+            day: "*",
+            month: "*",
+            year: "*"
+        },
+        description: "Assign Editor reminder for editor manager"
     }
     // Add new jobs here easily
 ];
