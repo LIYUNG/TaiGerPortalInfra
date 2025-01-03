@@ -2,7 +2,7 @@ import { Construct } from "constructs";
 import { InfraStack } from "./infrastack";
 import { Stage, StageProps } from "aws-cdk-lib";
 import { ServiceStack } from "./servicestack";
-import { AuthStack } from "./authstack";
+// import { AuthStack } from "./authstack";
 
 interface DeploymentkProps extends StageProps {
     stageName: string;
@@ -40,12 +40,12 @@ export class PipelineAppStage extends Stage {
             infraStack
         });
 
-        new AuthStack(this, `AuthStack-${props.stageName}`, {
-            env: props.env,
-            stageName: props.stageName,
-            domainStage: props.domainStage,
-            isProd: props.isProd
-        });
+        // new AuthStack(this, `AuthStack-${props.stageName}`, {
+        //     env: props.env,
+        //     stageName: props.stageName,
+        //     domainStage: props.domainStage,
+        //     isProd: props.isProd
+        // });
 
         serviceStack.addDependency(infraStack);
     }
