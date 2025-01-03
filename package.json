@@ -32,9 +32,12 @@
     "dependencies": {
         "@aws-sdk/client-s3": "^3.685.0",
         "@aws-sdk/client-secrets-manager": "^3.682.0",
+        "@aws-sdk/client-ses": "^3.721.0",
         "aws-cdk-lib": "2.149.0",
+        "bottleneck": "^2.19.5",
         "constructs": "^10.0.0",
         "mongodb": "^6.10.0",
+        "nodemailer": "^6.9.16",
         "prettier": "^3.3.3",
         "source-map-support": "^0.5.21"
     }
