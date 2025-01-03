@@ -1,3 +1,4 @@
+import type { Construct } from "constructs";
 import * as cdk from "aws-cdk-lib";
 import {
     ArnPrincipal,

@@ -2,6 +2,7 @@ import * as cdk from "aws-cdk-lib";
 import { InfraStack } from "./infrastack";
 import { CronJobsConstruct } from "../constructs";
 import { CRON_JOBS } from "../configuration";
+import { Construct } from "constructs";
 
 interface ServiceStackProps extends cdk.StackProps {
     stageName: string;

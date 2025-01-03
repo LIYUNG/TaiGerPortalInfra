@@ -11,6 +11,7 @@ import {
 import { PipelineAppStage } from "./app-stage";
 import { STAGES } from "../constants";
 import { PolicyStatement } from "aws-cdk-lib/aws-iam";
+import { Construct } from "constructs";
 
 export class TaiGerPortalInfraStack extends cdk.Stack {
     constructor(scope: Construct, id: string, props?: cdk.StackProps) {

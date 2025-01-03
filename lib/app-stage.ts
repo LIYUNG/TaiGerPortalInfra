@@ -1,6 +1,7 @@
 import { InfraStack } from "./infrastack";
 import { Stage, StageProps } from "aws-cdk-lib";
 import { ServiceStack } from "./servicestack";
+import { Construct } from "constructs";
 // import { AuthStack } from "./authstack";
 
 interface DeploymentkProps extends StageProps {

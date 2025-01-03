@@ -9,6 +9,7 @@ import { Bucket } from "aws-cdk-lib/aws-s3";
 
 import { InfraStack } from "../lib/infrastack";
 import { CronJobConfig } from "../types/cron-jobs";
+import { Construct } from "constructs";
 
 export interface CronJobsProps {
     stageName: string;
