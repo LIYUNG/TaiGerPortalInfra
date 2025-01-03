@@ -1,6 +1,8 @@
 const { isNotArchiv } = require("../../common/utils");
 const { connectToDatabase } = require("../../db");
-const { sendAssignEditorReminderEmail } = require("../../email/email-contents/sendAssignEditorReminderEmail");
+const {
+    sendAssignEditorReminderEmail
+} = require("../../email/email-contents/sendAssignEditorReminderEmail");
 
 async function AssignEditorTasksReminderEmails() {
     console.log("Executing tasks for Job AssignEditorTasksReminderEmails...");

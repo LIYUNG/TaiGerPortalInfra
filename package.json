@@ -7,9 +7,9 @@
     "scripts": {
         "clean": "rm -rf build dist cdk.out node_modules",
         "build": "tsc",
-        "lint": "eslint --cache lib test constants && prettier --list-different --cache .",
+        "lint": "eslint --cache lambda lib test constants && prettier --list-different --cache .",
         "lint:fix": "eslint --fix",
-        "format": "eslint --fix --cache lib test constants && prettier --write --cache .",
+        "format": "eslint --fix --cache lambda lib test constants && prettier --write --cache .",
         "prebuild": "npm run format",
         "watch": "tsc -w",
         "test": "jest",
