@@ -20,11 +20,4 @@ function transformDocument(doc) {
     return doc; // Return primitive types as is
 }
 
-const isNotArchiv = (user) => {
-    if (user.archiv === undefined || !user.archiv) {
-        return true;
-    }
-    return false;
-};
-
-module.exports = { transformDocument, isNotArchiv };
+module.exports = { transformDocument };
