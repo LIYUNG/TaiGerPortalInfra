@@ -11,7 +11,7 @@ async function AssignEditorTasksReminderEmails() {
         const db = await connectToDatabase();
         const usersCollection = db.collection("users");
         const permissionsCollection = db.collection("permissions");
-        const a = 0;
+
         // Fetch students (users with role 'student')
         const students = await usersCollection
             .aggregate([

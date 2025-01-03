@@ -2,7 +2,6 @@ import * as cdk from "aws-cdk-lib";
 import { SecretValue } from "aws-cdk-lib";
 import { CodePipeline, CodePipelineSource, ShellStep } from "aws-cdk-lib/pipelines";
 import * as codepipeline_actions from "aws-cdk-lib/aws-codepipeline-actions";
-import { Construct } from "constructs";
 import {
     GITHUB_OWNER,
     GITHUB_PACKAGE_BRANCH,

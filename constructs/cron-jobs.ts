@@ -1,6 +1,5 @@
 import * as cdk from "aws-cdk-lib";
 import path from "path";
-import { Construct } from "constructs";
 import { Rule, Schedule, RuleTargetInput } from "aws-cdk-lib/aws-events";
 import { LambdaFunction } from "aws-cdk-lib/aws-events-targets";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";

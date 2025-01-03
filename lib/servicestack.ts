@@ -1,5 +1,4 @@
 import * as cdk from "aws-cdk-lib";
-import { Construct } from "constructs";
 import { InfraStack } from "./infrastack";
 import { CronJobsConstruct } from "../constructs";
 import { CRON_JOBS } from "../configuration";

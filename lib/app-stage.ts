@@ -1,4 +1,3 @@
-import { Construct } from "constructs";
 import { InfraStack } from "./infrastack";
 import { Stage, StageProps } from "aws-cdk-lib";
 import { ServiceStack } from "./servicestack";

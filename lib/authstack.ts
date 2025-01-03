@@ -1,5 +1,4 @@
 import * as cdk from "aws-cdk-lib";
-import { Construct } from "constructs";
 import { UserPool, UserPoolClient } from "aws-cdk-lib/aws-cognito";
 
 interface AuthStackProps extends cdk.StackProps {
