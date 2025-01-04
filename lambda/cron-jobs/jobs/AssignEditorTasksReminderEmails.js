@@ -103,6 +103,8 @@ async function AssignEditorTasksReminderEmails() {
                 if (permissions) {
                     for (let x = 0; x < permissions.length; x += 1) {
                         if (students[i].needEditor) {
+                            const userName = `${permissions[x].user_id.firstname} ${permissions[x].user_id.lastnam}`;
+                            const studentName = `${students[i].firstname} ${students[i].lastname}`;
                             sendAssignEditorReminderEmail(
                                 {
                                     firstname: permissions[x].user_id.firstname,
@@ -115,10 +117,12 @@ async function AssignEditorTasksReminderEmails() {
                                     student_lastname: students[i].lastname
                                 }
                             );
+                            console.log(
+                                `${userName} is informed for assigning editor to ${studentName}`
+                            );
                         }
                     }
                 }
-                logger.info("Assign editor reminded");
             }
         }
 
