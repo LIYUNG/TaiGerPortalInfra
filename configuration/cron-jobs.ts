@@ -26,8 +26,8 @@ export const CRON_JOBS: CronJobConfig[] = [
     {
         jobType: "AssignEditorTasksReminderEmails",
         schedule: {
-            minute: "20",
-            hour: "13",
+            minute: "10",
+            hour: "19",
             day: "*",
             month: "*",
             year: "*"
