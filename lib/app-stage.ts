@@ -12,6 +12,7 @@ interface DeploymentkProps extends StageProps {
     mongoDBName: string;
     externalS3BucketName: string;
     internalMongodbS3BucketName: string;
+    origin: string;
 }
 
 export class PipelineAppStage extends Stage {
