@@ -95,9 +95,21 @@ async function AssignEditorTasksReminderEmails() {
                 }
                 // inform editor-lead
                 const permissions = await permissionsCollection
-                    .find({
-                        canAssignEditors: true
-                    })
+                    .aggregate([
+                        {
+                            $match: {
+                                canAssignEditors: true
+                            }
+                        },
+                        {
+                            $lookup: {
+                                from: "users",
+                                localField: "user_id",
+                                foreignField: "_id",
+                                as: "user_id"
+                            }
+                        }
+                    ])
                     .toArray();
 
                 if (permissions) {
