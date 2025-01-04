@@ -106,7 +106,7 @@ async function AssignEditorTasksReminderEmails() {
                                 from: "users",
                                 localField: "user_id",
                                 foreignField: "_id",
-                                as: "user_id"
+                                as: "user_info"
                             }
                         },
                         {
