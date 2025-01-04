@@ -2,6 +2,7 @@ const { createTransport } = require("nodemailer");
 const Bottleneck = require("bottleneck/es5");
 
 const { htmlContent } = require("./email-template");
+const { ses } = require("../aws");
 
 const transporter = createTransport({
     SES: { ses, aws: { SendRawEmailCommand } }
