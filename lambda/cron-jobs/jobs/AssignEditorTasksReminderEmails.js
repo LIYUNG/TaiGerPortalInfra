@@ -111,7 +111,7 @@ async function AssignEditorTasksReminderEmails() {
                         }
                     ])
                     .toArray();
-
+                console.log("permissions", permissions);
                 if (permissions) {
                     for (let x = 0; x < permissions.length; x += 1) {
                         if (students[i].needEditor) {

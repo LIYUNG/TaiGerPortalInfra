@@ -10,6 +10,8 @@ import { Bucket } from "aws-cdk-lib/aws-s3";
 import { InfraStack } from "../lib/infrastack";
 import { CronJobConfig } from "../types/cron-jobs";
 import { Construct } from "constructs";
+import { PolicyStatement } from "aws-cdk-lib/aws-iam";
+import { AWS_ACCOUNT } from "../configuration";
 
 export interface CronJobsProps {
     stageName: string;
@@ -70,6 +72,14 @@ export class CronJobsConstruct extends Construct {
 
         // Create cron rules only in production
         if (props.isProd) {
+            this.lambda.addToRolePolicy(
+                new PolicyStatement({
+                    actions: ["ses:SendEmail", "ses:SendRawEmail"],
+                    resources: [
+                        `arn:aws:ses:${props.region}:${AWS_ACCOUNT}:identity/taigerconsultancy-portal.com`
+                    ]
+                })
+            );
             this.createCronRules(props.cronJobs, props.stageName);
         }
     }
