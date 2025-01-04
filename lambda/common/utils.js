@@ -11,7 +11,7 @@ function transformDocument(doc) {
     } else if (typeof doc === "object" && doc !== null) {
         const transformed = {};
         for (let key in doc) {
-            if (doc.hasOwnProperty(key)) {
+            if (Object.prototype.hasOwnProperty.call(doc, key)) {
                 transformed[key] = transformDocument(doc[key]); // Recursively process objects
             }
         }

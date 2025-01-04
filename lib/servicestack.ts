@@ -13,6 +13,7 @@ interface ServiceStackProps extends cdk.StackProps {
     externalS3BucketName: string;
     internalMongodbS3BucketName: string;
     infraStack: InfraStack;
+    origin: string;
 }
 
 export class ServiceStack extends cdk.Stack {
@@ -32,7 +33,8 @@ export class ServiceStack extends cdk.Stack {
             externalS3BucketName: props.externalS3BucketName,
             internalMongodbS3BucketName: props.internalMongodbS3BucketName,
             infraStack: props.infraStack,
-            cronJobs: CRON_JOBS
+            cronJobs: CRON_JOBS,
+            origin: props.origin
         });
     }
 }

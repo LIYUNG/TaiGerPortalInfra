@@ -1,7 +1,8 @@
 const { sendEmail } = require("../config");
+const { SPLIT_LINE } = require("../email-template");
 
 const BASE_DOCUMENT_FOR_AGENT_URL = (studentId) =>
-    new URL(`/student-database/${studentId}#profile`, ORIGIN).href;
+    new URL(`/student-database/${studentId}#profile`, process.env.ORIGIN).href;
 
 const sendAssignEditorReminderEmail = async (recipient, payload) => {
     const student_name = `${payload.student_firstname} - ${payload.student_lastname}`;

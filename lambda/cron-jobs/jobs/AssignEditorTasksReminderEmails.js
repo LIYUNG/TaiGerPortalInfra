@@ -125,9 +125,6 @@ async function AssignEditorTasksReminderEmails() {
                 }
             }
         }
-
-        // Close MongoDB connection
-        await client.close();
     } catch (error) {
         console.error("Error running AssignEditorTasksReminderEmails:", error);
         throw error;

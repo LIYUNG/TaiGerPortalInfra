@@ -37,7 +37,8 @@ export class PipelineAppStage extends Stage {
             mongoDBName: props.mongoDBName,
             externalS3BucketName: props.externalS3BucketName,
             internalMongodbS3BucketName: props.internalMongodbS3BucketName,
-            infraStack
+            infraStack,
+            origin: props.origin
         });
 
         // new AuthStack(this, `AuthStack-${props.stageName}`, {

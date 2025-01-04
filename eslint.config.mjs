@@ -1,14 +1,17 @@
-import babelParser from "@babel/eslint-parser";
+import globals from "globals";
+import pluginJs from "@eslint/js";
 import typescriptEslintPlugin from "@typescript-eslint/eslint-plugin";
+import babelParser from "@babel/eslint-parser";
 
+/** @type {import('eslint').Linter.Config[]} */
 export default [
     {
-        files: ["**/*.ts", "**/*.js"],
+        files: ["**/*.ts"],
         plugins: {
             "@typescript-eslint": typescriptEslintPlugin
         },
         languageOptions: {
-            parser: babelParser,
+            parser: babelParser, // Use the TypeScript parser
             parserOptions: {
                 requireConfigFile: false, // For Babel parser
                 babelOptions: {
@@ -28,5 +31,18 @@ export default [
                 }
             ]
         }
+    },
+    {
+        files: ["**/*.js"],
+        plugins: {
+            "@eslint/js": typescriptEslintPlugin
+        },
+        languageOptions: {
+            sourceType: "module",
+            globals: {
+                ...globals.node // Add Node.js globals like `process`, `require`, `module`
+            }
+        },
+        ...pluginJs.configs.recommended
     }
 ];

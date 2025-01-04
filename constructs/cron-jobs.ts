@@ -21,6 +21,7 @@ export interface CronJobsProps {
     internalMongodbS3BucketName: string;
     infraStack: InfraStack;
     cronJobs: CronJobConfig[];
+    origin: string;
 }
 
 export class CronJobsConstruct extends Construct {
@@ -57,7 +58,8 @@ export class CronJobsConstruct extends Construct {
                 MONGODB_NAME: props.mongoDBName,
                 EXTERNAL_S3_BUCKET_NAME: props.externalS3BucketName,
                 INTERNAL_MONGODB_S3_BUCKET_NAME: props.internalMongodbS3BucketName,
-                REGION: props.region
+                REGION: props.region,
+                ORIGIN: props.origin
             }
         });
 
