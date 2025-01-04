@@ -108,6 +108,20 @@ async function AssignEditorTasksReminderEmails() {
                                 foreignField: "_id",
                                 as: "user_id"
                             }
+                        },
+                        {
+                            $unwind: {
+                                path: "$user_info",
+                                preserveNullAndEmptyArrays: false
+                            }
+                        },
+                        {
+                            $set: {
+                                user_id: "$user_info"
+                            }
+                        },
+                        {
+                            $unset: "user_info" // Optional: remove the temporary user_info field
                         }
                     ])
                     .toArray();
