@@ -69,6 +69,39 @@ async function AssignEditorTasksReminderEmails() {
             ])
             .toArray();
 
+        // inform editor-lead
+        const permissions = await permissionsCollection
+            .aggregate([
+                {
+                    $match: {
+                        canAssignEditors: true
+                    }
+                },
+                {
+                    $lookup: {
+                        from: "users",
+                        localField: "user_id",
+                        foreignField: "_id",
+                        as: "user_info"
+                    }
+                },
+                {
+                    $unwind: {
+                        path: "$user_info",
+                        preserveNullAndEmptyArrays: false
+                    }
+                },
+                {
+                    $set: {
+                        user_id: "$user_info"
+                    }
+                },
+                {
+                    $unset: "user_info" // Optional: remove the temporary user_info field
+                }
+            ])
+            .toArray();
+        console.log("permissions", permissions);
         // Iterate over the students
         for (let i = 0; i < students.length; i += 1) {
             if (!students[i].editors || students[i].editors.length === 0) {
@@ -93,43 +126,11 @@ async function AssignEditorTasksReminderEmails() {
                         }
                     }
                 }
-                // inform editor-lead
-                const permissions = await permissionsCollection
-                    .aggregate([
-                        {
-                            $match: {
-                                canAssignEditors: true
-                            }
-                        },
-                        {
-                            $lookup: {
-                                from: "users",
-                                localField: "user_id",
-                                foreignField: "_id",
-                                as: "user_info"
-                            }
-                        },
-                        {
-                            $unwind: {
-                                path: "$user_info",
-                                preserveNullAndEmptyArrays: false
-                            }
-                        },
-                        {
-                            $set: {
-                                user_id: "$user_info"
-                            }
-                        },
-                        {
-                            $unset: "user_info" // Optional: remove the temporary user_info field
-                        }
-                    ])
-                    .toArray();
-                console.log("permissions", permissions);
+
                 if (permissions) {
                     for (let x = 0; x < permissions.length; x += 1) {
                         if (students[i].needEditor) {
-                            const userName = `${permissions[x].user_id.firstname} ${permissions[x].user_id.lastnam}`;
+                            const userName = `${permissions[x].user_id.firstname} ${permissions[x].user_id.lastname}`;
                             const studentName = `${students[i].firstname} ${students[i].lastname}`;
                             sendAssignEditorReminderEmail(
                                 {
