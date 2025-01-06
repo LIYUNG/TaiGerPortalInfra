@@ -23,17 +23,23 @@ async function AssignEditorTasksReminderEmails() {
                 },
                 {
                     $lookup: {
-                        from: "users", // Assuming agents and editors are also in the 'users' collection
-                        localField: "agents",
-                        foreignField: "_id",
+                        from: "users",
+                        let: { agentIds: "$agents" },
+                        pipeline: [
+                            { $match: { $expr: { $in: ["$_id", "$$agentIds"] } } },
+                            { $project: { email: 1, archiv: 1, firstname: 1, lastname: 1, _id: 0 } }
+                        ],
                         as: "agents"
                     }
                 },
                 {
                     $lookup: {
                         from: "users",
-                        localField: "editors",
-                        foreignField: "_id",
+                        let: { editorIds: "$editors" },
+                        pipeline: [
+                            { $match: { $expr: { $in: ["$_id", "$$editorIds"] } } },
+                            { $project: { email: 1, archiv: 1, firstname: 1, lastname: 1, _id: 0 } }
+                        ],
                         as: "editors"
                     }
                 },
@@ -124,7 +130,7 @@ async function AssignEditorTasksReminderEmails() {
                     agentsMap.get(key).students.push({
                         firstname: student.firstname,
                         lastname: student.lastname,
-                        id: student._id.toString()
+                        _id: student._id.toString()
                     });
                 });
             }
