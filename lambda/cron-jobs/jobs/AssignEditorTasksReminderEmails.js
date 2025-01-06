@@ -99,7 +99,12 @@ async function AssignEditorTasksReminderEmails() {
                 },
                 {
                     $set: {
-                        user_id: "$user_info"
+                        user_id: {
+                            _id: "$user_info._id",
+                            email: "$user_info.email",
+                            firstname: "$user_info.firstname",
+                            lastname: "$user_info.lastname"
+                        }
                     }
                 },
                 {
