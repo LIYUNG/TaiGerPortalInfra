@@ -4,7 +4,6 @@ const Bottleneck = require("bottleneck/es5");
 const { htmlContent } = require("./email-template");
 const { ses, SendRawEmailCommand } = require("../aws");
 
-// const appDomain = "taigerconsultancy-portal.com";
 const senderEmail = "no-reply@taigerconsultancy-portal.com";
 const taigerNotReplyGmail = "noreply.taigerconsultancy@gmail.com";
 const senderName = `No-Reply TaiGer Consultancy ${senderEmail}`;

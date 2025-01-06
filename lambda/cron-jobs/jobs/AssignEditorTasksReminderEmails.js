@@ -128,27 +128,55 @@ async function AssignEditorTasksReminderEmails() {
                 }
 
                 if (permissions) {
-                    for (let x = 0; x < permissions.length; x += 1) {
-                        if (students[i].needEditor) {
-                            const userName = `${permissions[x].user_id.firstname} ${permissions[x].user_id.lastname}`;
-                            const studentName = `${students[i].firstname} ${students[i].lastname}`;
-                            sendAssignEditorReminderEmail(
-                                {
-                                    firstname: permissions[x].user_id.firstname,
-                                    lastname: permissions[x].user_id.lastname,
-                                    address: permissions[x].user_id.email
-                                },
-                                {
-                                    student_firstname: students[i].firstname,
-                                    student_id: students[i]._id.toString(),
-                                    student_lastname: students[i].lastname
-                                }
-                            );
-                            console.log(
-                                `${userName} is informed for assigning editor to ${studentName}`
-                            );
+                    for (const student of students) {
+                        if (student.needEditor) {
+                            const studentName = `${student.firstname} ${student.lastname}`;
+                            const studentDetails = {
+                                student_firstname: student.firstname,
+                                student_id: student._id.toString(),
+                                student_lastname: student.lastname
+                            };
+
+                            // Create an array of promises for sending emails
+                            const emailPromises = permissions.map(async (permission) => {
+                                const { firstname, lastname, email } = permission.user_id;
+                                const userName = `${firstname} ${lastname}`;
+
+                                await sendAssignEditorReminderEmail(
+                                    { firstname, lastname, address: email },
+                                    studentDetails
+                                );
+
+                                console.log(
+                                    `${userName} is informed for assigning editor to ${studentName}`
+                                );
+                            });
+
+                            // Run all email sends in parallel
+                            await Promise.all(emailPromises);
                         }
                     }
+                    // for (let x = 0; x < permissions.length; x += 1) {
+                    //     if (students[i].needEditor) {
+                    //         const userName = `${permissions[x].user_id.firstname} ${permissions[x].user_id.lastname}`;
+                    //         const studentName = `${students[i].firstname} ${students[i].lastname}`;
+                    //         sendAssignEditorReminderEmail(
+                    //             {
+                    //                 firstname: permissions[x].user_id.firstname,
+                    //                 lastname: permissions[x].user_id.lastname,
+                    //                 address: permissions[x].user_id.email
+                    //             },
+                    //             {
+                    //                 student_firstname: students[i].firstname,
+                    //                 student_id: students[i]._id.toString(),
+                    //                 student_lastname: students[i].lastname
+                    //             }
+                    //         );
+                    //         console.log(
+                    //             `${userName} is informed for assigning editor to ${studentName}`
+                    //         );
+                    //     }
+                    // }
                 }
             }
         }
