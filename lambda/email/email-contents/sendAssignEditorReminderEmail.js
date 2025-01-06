@@ -4,30 +4,36 @@ const { SPLIT_LINE } = require("../email-template");
 const BASE_DOCUMENT_FOR_AGENT_URL = (studentId) =>
     new URL(`/student-database/${studentId}#profile`, process.env.ORIGIN).href;
 
-const sendAssignEditorReminderEmail = async (recipient, payload) => {
-    const student_name = `${payload.student_firstname} - ${payload.student_lastname}`;
-    const baseDocumentLink = `${BASE_DOCUMENT_FOR_AGENT_URL(payload.student_id)}`;
+const sendAssignEditorReminderEmailV2 = async (recipient, payload) => {
+    let studentNames = "<ul>";
+    for (let i = 0; i < payload.noEditorStudents.length; i += 1) {
+        const studentName = `${payload.noEditorStudents[i].firstname} ${payload.noEditorStudents[i].lastname}`;
+        const studentIdLink = `${BASE_DOCUMENT_FOR_AGENT_URL(payload.noEditorStudents[i]._id.toString())}`;
+        studentNames += `<li><a href="${studentIdLink}" target="_blank" class="mui-button" rel="noopener noreferrer">Assign Editor to ${studentName}</a></li>`;
+    }
+    studentNames += "</ul>";
+    // payload.noEditorStudents?.map((student)=>);
     const subject = "[DO NOT IGNORE] Assign Editor Reminder";
     const message = `\
 <p>Hi ${recipient.firstname} ${recipient.lastname},</p>
 
-<p>${student_name} has uploaded some input in his/her CVMLRL Center, <b>but she/he did not have any Editor yet.</b></p>
+<p> The following students have uploaded some input in his/her CVMLRL Center, <b>but they did not have any Editor yet.</b></p>
 
-<p><b>Please assign an Editor to the student <a href="${baseDocumentLink}">${student_name}</a></b></p>
+${studentNames}
 
-<a href="${baseDocumentLink}" class="mui-button" target="_blank">Assign Editor</a>
+<p><b>Please assign an Editor to the students above</b></p>
 
 <p>${SPLIT_LINE}</p>
 
-<p>${student_name} 上傳了一份文件至他的 CVMLRL Cetner，但他目前並無任何編輯。</p>
+<p>以下學生上傳了一份文件至他的 CVMLRL Cetner，但他目前並無任何編輯。</p>
 
-<p><b>請指派編輯學生 <a href="${baseDocumentLink}">${student_name}</a></b></p>
+${studentNames} 
 
-<a href="${baseDocumentLink}" class="mui-button" target="_blank">指派編輯</a>
+<p><b>請指派編輯給以上學生。</b></p>
 
 `; // should be for admin/editor/agent/student
 
     return sendEmail(recipient, subject, message);
 };
 
-module.exports = { sendAssignEditorReminderEmail };
+module.exports = { sendAssignEditorReminderEmailV2 };

@@ -1,7 +1,7 @@
 const { isNotArchiv } = require("@taiger-common/core");
 const { connectToDatabase } = require("../../db");
 const {
-    sendAssignEditorReminderEmail
+    sendAssignEditorReminderEmailV2
 } = require("../../email/email-contents/sendAssignEditorReminderEmail");
 
 async function AssignEditorTasksReminderEmails() {
@@ -103,84 +103,88 @@ async function AssignEditorTasksReminderEmails() {
             .toArray();
         console.log("permissions", permissions);
         // Iterate over the students
-        for (let i = 0; i < students.length; i += 1) {
-            if (!students[i].editors || students[i].editors.length === 0) {
-                for (let j = 0; j < students[i].agents.length; j += 1) {
-                    // inform active-agent
-                    if (isNotArchiv(students[i])) {
-                        if (isNotArchiv(students[i].agents[j])) {
-                            if (students[i].needEditor) {
-                                sendAssignEditorReminderEmail(
-                                    {
-                                        firstname: students[i].agents[j].firstname,
-                                        lastname: students[i].agents[j].lastname,
-                                        address: students[i].agents[j].email
-                                    },
-                                    {
-                                        student_firstname: students[i].firstname,
-                                        student_id: students[i]._id.toString(),
-                                        student_lastname: students[i].lastname
-                                    }
-                                );
-                            }
-                        }
+        const noEditorStudents = students.filter(
+            (student) => !student.editors || student.editors.length === 0
+        );
+
+        const agentsMap = new Map();
+
+        for (const student of noEditorStudents) {
+            if (student.needEditor) {
+                const activeAgents = student.agents.filter(isNotArchiv);
+
+                activeAgents.forEach((agent) => {
+                    const key = agent.email; // Use agent's email as the unique key
+                    if (!agentsMap.has(key)) {
+                        agentsMap.set(key, {
+                            agent,
+                            students: []
+                        });
                     }
-                }
-
-                if (permissions) {
-                    // for (const student of students) {
-                    //     if (student.needEditor) {
-                    //         const studentName = `${student.firstname} ${student.lastname}`;
-                    //         const studentDetails = {
-                    //             student_firstname: student.firstname,
-                    //             student_id: student._id.toString(),
-                    //             student_lastname: student.lastname
-                    //         };
-
-                    //         // Create an array of promises for sending emails
-                    //         const emailPromises = permissions.map(async (permission) => {
-                    //             const { firstname, lastname, email } = permission.user_id;
-                    //             const userName = `${firstname} ${lastname}`;
-
-                    //             await sendAssignEditorReminderEmail(
-                    //                 { firstname, lastname, address: email },
-                    //                 studentDetails
-                    //             );
-
-                    //             console.log(
-                    //                 `${userName} is informed for assigning editor to ${studentName}`
-                    //             );
-                    //         });
-
-                    //         // Run all email sends in parallel
-                    //         await Promise.all(emailPromises);
-                    //     }
-                    // }
-
-                    // TODO: aggregate the list of student and sent only one email.
-                    for (let x = 0; x < permissions.length; x += 1) {
-                        if (students[i].needEditor) {
-                            const userName = `${permissions[x].user_id.firstname} ${permissions[x].user_id.lastname}`;
-                            const studentName = `${students[i].firstname} ${students[i].lastname}`;
-                            sendAssignEditorReminderEmail(
-                                {
-                                    firstname: permissions[x].user_id.firstname,
-                                    lastname: permissions[x].user_id.lastname,
-                                    address: permissions[x].user_id.email
-                                },
-                                {
-                                    student_firstname: students[i].firstname,
-                                    student_id: students[i]._id.toString(),
-                                    student_lastname: students[i].lastname
-                                }
-                            );
-                            console.log(
-                                `${userName} is informed for assigning editor to ${studentName}`
-                            );
-                        }
-                    }
-                }
+                    agentsMap.get(key).students.push({
+                        firstname: student.firstname,
+                        lastname: student.lastname,
+                        id: student._id.toString()
+                    });
+                });
             }
+        }
+
+        // Step 2: Send a single email to each agent with their student list
+        const emailPromises = Array.from(agentsMap.values()).map(({ agent, students }) =>
+            sendAssignEditorReminderEmailV2(
+                {
+                    firstname: agent.firstname,
+                    lastname: agent.lastname,
+                    address: agent.email
+                },
+                {
+                    noEditorStudents: students // Pass the list of students for the agent
+                }
+            )
+        );
+
+        await Promise.all(emailPromises);
+
+        if (permissions?.length) {
+            // Step 1: Filter students who need editors
+            const noEditorStudentsNeedEditor = noEditorStudents.filter(
+                (student) => student.needEditor
+            );
+
+            // Step 2: Send an email to each permission user with the list of students
+            const emailPromises = permissions.map((permission) => {
+                const userName = `${permission.user_id.firstname} ${permission.user_id.lastname}`;
+
+                // Format the list of student names for logging
+                const noEditorStudentsNeedEditorStringified = noEditorStudentsNeedEditor
+                    .map((student) => `${student.firstname} ${student.lastname}`)
+                    .join(", ");
+
+                // Send email
+                const emailPromise = sendAssignEditorReminderEmailV2(
+                    {
+                        firstname: permission.user_id.firstname,
+                        lastname: permission.user_id.lastname,
+                        address: permission.user_id.email
+                    },
+                    {
+                        noEditorStudents: noEditorStudentsNeedEditor
+                    }
+                );
+
+                // Log the action
+                emailPromise.then(() => {
+                    console.log(
+                        `${userName} is informed for assigning editor to ${noEditorStudentsNeedEditorStringified}`
+                    );
+                });
+
+                return emailPromise;
+            });
+
+            // Step 3: Wait for all emails to be sent
+            await Promise.all(emailPromises);
         }
     } catch (error) {
         console.error("Error running AssignEditorTasksReminderEmails:", error);

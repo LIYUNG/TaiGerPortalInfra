@@ -16,7 +16,7 @@ const limiter = new Bottleneck({
     minTime: 1100 / 14
 });
 
-const sendEmail = (to, subject, message) => {
+const sendEmail = async (to, subject, message) => {
     const mail = {
         from: senderName,
         to,
