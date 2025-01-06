@@ -156,6 +156,8 @@ async function AssignEditorTasksReminderEmails() {
                     //         await Promise.all(emailPromises);
                     //     }
                     // }
+
+                    // TODO: aggregate the list of student and sent only one email.
                     for (let x = 0; x < permissions.length; x += 1) {
                         if (students[i].needEditor) {
                             const userName = `${permissions[x].user_id.firstname} ${permissions[x].user_id.lastname}`;
