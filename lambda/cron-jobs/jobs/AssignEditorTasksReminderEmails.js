@@ -112,11 +112,13 @@ async function AssignEditorTasksReminderEmails() {
                 }
             ])
             .toArray();
-        console.log("permissions", permissions);
+        console.log("permissions ", permissions);
         // Iterate over the students
         const noEditorStudents = students.filter(
             (student) => !student.editors || student.editors.length === 0
         );
+
+        console.log("noEditorStudents: ", noEditorStudents);
 
         const agentsMap = new Map();
 
@@ -163,6 +165,8 @@ async function AssignEditorTasksReminderEmails() {
                 (student) => student.needEditor
             );
 
+            console.log("noEditorStudentsNeedEditor: ", noEditorStudentsNeedEditor);
+
             if (noEditorStudentsNeedEditor?.length > 0) {
                 // Step 2: Send an email to each permission user with the list of students
                 const emailPromises = permissions.map((permission) => {
@@ -172,6 +176,11 @@ async function AssignEditorTasksReminderEmails() {
                     const noEditorStudentsNeedEditorStringified = noEditorStudentsNeedEditor
                         .map((student) => `${student.firstname} ${student.lastname}`)
                         .join(", ");
+
+                    console.log(
+                        "noEditorStudentsNeedEditorStringified: ",
+                        noEditorStudentsNeedEditorStringified
+                    );
 
                     // Send email
                     const emailPromise = sendAssignEditorReminderEmailV2(
