@@ -9,12 +9,13 @@
         "build": "tsc",
         "lint": "eslint --cache lambda lib test constants && prettier --list-different --cache .",
         "lint:fix": "eslint --fix",
-        "format": "eslint --fix --cache lambda lib test constants && prettier --write --cache .",
-        "prebuild": "npm run format",
+        "format": "prettier --write --cache .",
+        "prebuild": "rm -rf build dist cdk.out",
         "watch": "tsc -w",
         "test": "jest",
         "cdk": "cdk",
-        "prepare": "husky"
+        "prepare": "husky",
+        "pre-commit": "lint-staged"
     },
     "lint-staged": {
         "**/*.js": [

@@ -1,1 +1,10 @@
-npm run format
+echo "Compiling Typescript..."
+npm run build
+
+echo "Running tests"
+npm run test
+
+echo "Running precommit"
+npm run pre-commit
+
+echo "Pre-commit checks completed successfully!"

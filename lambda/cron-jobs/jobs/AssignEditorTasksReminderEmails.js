@@ -163,39 +163,41 @@ async function AssignEditorTasksReminderEmails() {
                 (student) => student.needEditor
             );
 
-            // Step 2: Send an email to each permission user with the list of students
-            const emailPromises = permissions.map((permission) => {
-                const userName = `${permission.user_id.firstname} ${permission.user_id.lastname}`;
+            if (noEditorStudentsNeedEditor?.length > 0) {
+                // Step 2: Send an email to each permission user with the list of students
+                const emailPromises = permissions.map((permission) => {
+                    const userName = `${permission.user_id.firstname} ${permission.user_id.lastname}`;
 
-                // Format the list of student names for logging
-                const noEditorStudentsNeedEditorStringified = noEditorStudentsNeedEditor
-                    .map((student) => `${student.firstname} ${student.lastname}`)
-                    .join(", ");
+                    // Format the list of student names for logging
+                    const noEditorStudentsNeedEditorStringified = noEditorStudentsNeedEditor
+                        .map((student) => `${student.firstname} ${student.lastname}`)
+                        .join(", ");
 
-                // Send email
-                const emailPromise = sendAssignEditorReminderEmailV2(
-                    {
-                        firstname: permission.user_id.firstname,
-                        lastname: permission.user_id.lastname,
-                        address: permission.user_id.email
-                    },
-                    {
-                        noEditorStudents: noEditorStudentsNeedEditor
-                    }
-                );
-
-                // Log the action
-                emailPromise.then(() => {
-                    console.log(
-                        `${userName} is informed for assigning editor to ${noEditorStudentsNeedEditorStringified}`
+                    // Send email
+                    const emailPromise = sendAssignEditorReminderEmailV2(
+                        {
+                            firstname: permission.user_id.firstname,
+                            lastname: permission.user_id.lastname,
+                            address: permission.user_id.email
+                        },
+                        {
+                            noEditorStudents: noEditorStudentsNeedEditor
+                        }
                     );
+
+                    // Log the action
+                    emailPromise.then(() => {
+                        console.log(
+                            `${userName} is informed for assigning editor to ${noEditorStudentsNeedEditorStringified}`
+                        );
+                    });
+
+                    return emailPromise;
                 });
 
-                return emailPromise;
-            });
-
-            // Step 3: Wait for all emails to be sent
-            await Promise.all(emailPromises);
+                // Step 3: Wait for all emails to be sent
+                await Promise.all(emailPromises);
+            }
         }
     } catch (error) {
         console.error("Error running AssignEditorTasksReminderEmails:", error);
