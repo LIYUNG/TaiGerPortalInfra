@@ -1,6 +1,9 @@
 const { MongoClient } = require("mongodb");
 const { connStr, botToken, channelId } = require("../../utils/constants");
 
+/**
+ * Database connection utilities
+ */
 const connectDB = async () => {
     try {
         const client = new MongoClient(connStr);
@@ -8,15 +11,21 @@ const connectDB = async () => {
         return client;
     } catch (error) {
         console.error("Error connecting to database:", error);
+        throw error;
     }
 };
 
-const getrecentThreads = async () => {
-    const client = await connectDB();
-    const db = client.db("TaiGer");
-    const threadCollection = db.collection("documentthreads");
-
+/**
+ * Fetches recent essay threads from the database
+ * @returns {Promise<Array>} Array of recent threads with student and program information
+ */
+const getRecentThreads = async () => {
+    let client;
     try {
+        client = await connectDB();
+        const db = client.db("TaiGer");
+        const threadCollection = db.collection("documentthreads");
+
         const recentThreads = await threadCollection
             .aggregate([
                 { $match: { file_type: "Essay" } },
@@ -54,15 +63,39 @@ const getrecentThreads = async () => {
         return recentThreads;
     } catch (error) {
         console.error("Error fetching threads:", error);
+        throw error;
     } finally {
-        await client.close();
-        console.log("Database connection closed");
+        if (client) {
+            await client.close();
+            console.log("Database connection closed");
+        }
     }
 };
 
+/**
+ * Slack message utilities
+ */
+const createStudentThreadLink = (thread) => {
+    const studentName = thread.student?.[0]
+        ? `${thread.student[0].firstname} ${thread.student[0].lastname}`
+        : "Unknown Student";
+    const studentProfileLink = `<https://taigerconsultancy-portal.com/student-database/${thread.student_id}|${studentName}>`;
+    const threadLink = `<https://taigerconsultancy-portal.com/document-modification/${thread._id}|View Thread>`;
+    const programInfo = thread.program?.[0]
+        ? `${thread.program[0].school} - ${thread.program[0].program_name}`
+        : "N/A";
+
+    return `- ${studentProfileLink} - ${threadLink}\n\t*${programInfo}*`;
+};
+
+/**
+ * Generates the reminder message blocks for Slack
+ * @param {Array} threads - Array of thread objects
+ * @returns {Array} Slack message blocks
+ */
 const getEssayAssignmentReminderText = (threads) => {
     if (!threads || threads.length === 0) {
-        return;
+        return null;
     }
 
     const currentDateTime = new Date();
@@ -75,23 +108,9 @@ const getEssayAssignmentReminderText = (threads) => {
         timeStyle: "short"
     });
 
-    // Create a list of student threads with hyperlinks
-    const studentThreadsList = threads
-        .map((thread) => {
-            const studentName = thread.student?.[0]
-                ? `${thread.student[0].firstname} ${thread.student[0].lastname}`
-                : "Unknown Student";
-            const studentProfileLink = `<https://taigerconsultancy-portal.com/student-database/${thread.student_id}|${studentName}>`;
-            const threadLink = `<https://taigerconsultancy-portal.com/document-modification/${thread._id}|View Thread>`;
-            const programInfo = thread.program?.[0]
-                ? `${thread.program[0].school} - ${thread.program[0].program_name}`
-                : "N/A";
+    const studentThreadsList = threads.map(createStudentThreadLink).join("\n\n");
 
-            return `- ${studentProfileLink} - ${threadLink}\n\t*${programInfo}*`;
-        })
-        .join("\n\n");
-
-    const blocks = [
+    return [
         {
             type: "header",
             text: {
@@ -145,10 +164,15 @@ const getEssayAssignmentReminderText = (threads) => {
             ]
         }
     ];
-
-    return blocks;
 };
 
+/**
+ * Sends a message to a Slack channel
+ * @param {string} channelId - The Slack channel ID
+ * @param {string} message - The message text
+ * @param {Array} blocks - The message blocks
+ * @returns {Promise<boolean>} Success status
+ */
 const sendSlackMessage = async (channelId, message = "", blocks = []) => {
     if (!channelId) {
         console.error("Channel ID is required");
@@ -183,10 +207,20 @@ const sendSlackMessage = async (channelId, message = "", blocks = []) => {
     }
 };
 
+/**
+ * Main function to send essay assignment reminders
+ */
 const sendEssayAssignmentReminder = async () => {
-    const threads = await getrecentThreads();
-    const message = getEssayAssignmentReminderText(threads);
-    sendSlackMessage(channelId, "", message);
+    try {
+        const threads = await getRecentThreads();
+        const messageBlocks = getEssayAssignmentReminderText(threads);
+        if (messageBlocks) {
+            await sendSlackMessage(channelId, "", messageBlocks);
+        }
+    } catch (error) {
+        console.error("Error in sendEssayAssignmentReminder:", error);
+    }
 };
 
+// Execute the reminder
 sendEssayAssignmentReminder();
