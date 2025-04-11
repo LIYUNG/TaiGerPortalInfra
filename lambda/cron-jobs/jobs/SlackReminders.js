@@ -1,5 +1,5 @@
 const { MongoClient } = require("mongodb");
-const { connStr, botToken, channelId } = require("../../utils/constants");
+const { connStr, botToken, channelId, slackMemberIds } = require("../../utils/constants");
 
 /**
  * Database connection utilities
@@ -89,6 +89,36 @@ const createStudentThreadLink = (thread) => {
 };
 
 /**
+ * Filters threads based on their age
+ * @param {Array} threads - Array of thread objects
+ * @param {number} days - Number of days to check
+ * @returns {Array} Filtered threads
+ */
+const filterThreadsByAge = (threads, days) => {
+    return threads;
+};
+
+/**
+ * Creates a formatted message for a specific time period
+ * @param {Array} threads - Array of thread objects
+ * @param {number} days - Number of days
+ * @param {boolean} shouldTag - Whether to include member tags
+ * @returns {string} Formatted message
+ */
+const createTimeBasedMessage = (threads, days, tagMember = []) => {
+    if (!threads || threads.length === 0) {
+        return null;
+    }
+
+    const studentThreadsList = threads.map(createStudentThreadLink).join("\n\n");
+
+    const memberTags =
+        tagMember.length > 0 ? `\n\n cc: ${tagMember.map((member) => "<@" + member + ">")}` : "";
+
+    return `📌 *Over ${days} Days - Editor or Essay Writer Not Assigned* \n*超過${days}天未指派顧問或編輯：* \n\n${studentThreadsList}${memberTags}`;
+};
+
+/**
  * Generates the reminder message blocks for Slack
  * @param {Array} threads - Array of thread objects
  * @returns {Array} Slack message blocks
@@ -108,9 +138,18 @@ const getEssayAssignmentReminderText = (threads) => {
         timeStyle: "short"
     });
 
-    const studentThreadsList = threads.map(createStudentThreadLink).join("\n\n");
+    // Filter threads for different time periods
+    const sevenDayThreads = filterThreadsByAge(threads, 7);
+    const threeDayThreads = filterThreadsByAge(threads, 3);
 
-    return [
+    // Create messages only if there are threads for each period
+    const sevenDayMessage = createTimeBasedMessage(sevenDayThreads, 7, [
+        slackMemberIds.David,
+        slackMemberIds.Sydney
+    ]);
+    const threeDayMessage = createTimeBasedMessage(threeDayThreads, 3, [slackMemberIds.Lena]);
+
+    const blocks = [
         {
             type: "header",
             text: {
@@ -133,28 +172,39 @@ const getEssayAssignmentReminderText = (threads) => {
                 type: "mrkdwn",
                 text: "*Hi team*,\nThe following student cases have *not been assigned* within the expected timeframe.\n*以下學生案件尚未完成指派，請儘速處理，謝謝！*"
             }
-        },
-        {
-            type: "divider"
-        },
-        {
-            type: "section",
-            text: {
-                type: "mrkdwn",
-                text: `📌 *Over 7 Days - Editor or Essay Writer Not Assigned* \n*超過7天未指派顧問或編輯：* \n\n${studentThreadsList}`
+        }
+    ];
+
+    // Only add sections if there are threads for that time period
+    if (sevenDayMessage) {
+        blocks.push(
+            { type: "divider" },
+            {
+                type: "section",
+                text: {
+                    type: "mrkdwn",
+                    text: sevenDayMessage
+                }
             }
-        },
-        {
-            type: "divider"
-        },
-        {
-            type: "section",
-            text: {
-                type: "mrkdwn",
-                text: `📌 *Over 3 Days - Editor or Essay Writer Not Assigned* \n*超過3天未指派顧問或編輯：*\n\n${studentThreadsList}`
+        );
+    }
+
+    if (threeDayMessage) {
+        blocks.push(
+            { type: "divider" },
+            {
+                type: "section",
+                text: {
+                    type: "mrkdwn",
+                    text: threeDayMessage
+                }
             }
-        },
-        {
+        );
+    }
+
+    // Only add the context block if there are any threads to process
+    if (sevenDayMessage || threeDayMessage) {
+        blocks.push({
             type: "context",
             elements: [
                 {
@@ -162,8 +212,10 @@ const getEssayAssignmentReminderText = (threads) => {
                     text: "Please check these cases and follow up accordingly. 請確認以上案件並盡快跟進處理。"
                 }
             ]
-        }
-    ];
+        });
+    }
+
+    return blocks;
 };
 
 /**
