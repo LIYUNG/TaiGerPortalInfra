@@ -45,5 +45,4 @@ export const CRON_JOBS: CronJobConfig[] = [
         },
         description: "Send reminders for interview survey completion"
     }
-    // Add new jobs here easily
 ];
