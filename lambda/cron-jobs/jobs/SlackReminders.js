@@ -1,5 +1,11 @@
 const { MongoClient } = require("mongodb");
-const { connStr, botToken, channelId, slackMemberIds } = require("../../utils/constants");
+const {
+    TENANT_PORTAL_LINK,
+    connStr,
+    botToken,
+    channelId,
+    slackMemberIds
+} = require("../../utils/constants");
 
 /**
  * Database connection utilities
@@ -16,51 +22,89 @@ const connectDB = async () => {
 };
 
 /**
- * Fetches recent essay threads from the database
- * @returns {Promise<Array>} Array of recent threads with student and program information
+ * Retrieves all active student users who have no assigned editors and at least one application,
+ * along with their associated document threads that contain at least one message.
+ * @returns {Promise<Array<Object>>} An array of student user objects, each including their matching document threads.
  */
-const getRecentThreads = async () => {
+const getNoEditorStudentActiveThreads = async () => {
     let client;
     try {
         client = await connectDB();
-        const db = client.db("TaiGer");
-        const threadCollection = db.collection("documentthreads");
+        const db = client.db("TaiGer_Prod");
+        const userCollection = db.collection("users");
 
-        const recentThreads = await threadCollection
+        const activeThreads = await userCollection
             .aggregate([
-                { $match: { file_type: "Essay" } },
-                { $sort: { updatedAt: -1 } },
-                { $limit: 3 },
+                {
+                    $match: {
+                        role: "Student",
+                        $and: [
+                            { $or: [{ archiv: { $exists: false } }, { archiv: false }] },
+                            { $or: [{ editors: { $size: 0 } }, { editors: { $exists: false } }] }
+                        ],
+                        $expr: {
+                            $gt: [
+                                {
+                                    $size: "$applications"
+                                },
+                                0
+                            ]
+                        }
+                    }
+                },
+                {
+                    $lookup: {
+                        from: "documentthreads",
+                        let: {
+                            studentId: "$_id"
+                        },
+                        pipeline: [
+                            {
+                                $match: {
+                                    $expr: {
+                                        $and: [
+                                            {
+                                                $eq: ["$student_id", "$$studentId"]
+                                            },
+                                            {
+                                                $gt: [
+                                                    {
+                                                        $size: "$messages"
+                                                    },
+                                                    0
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        ],
+                        as: "documentthreads"
+                    }
+                },
+                {
+                    $match: {
+                        $expr: {
+                            $gt: [
+                                {
+                                    $size: "$documentthreads"
+                                },
+                                0
+                            ]
+                        }
+                    }
+                },
                 {
                     $project: {
                         _id: 1,
-                        student_id: 1,
-                        program_id: 1,
-                        file_type: 1,
-                        updatedAt: 1
-                    }
-                },
-                {
-                    $lookup: {
-                        from: "users",
-                        localField: "student_id",
-                        foreignField: "_id",
-                        as: "student",
-                        pipeline: [{ $project: { email: 1, firstname: 1, lastname: 1, _id: 1 } }]
-                    }
-                },
-                {
-                    $lookup: {
-                        from: "programs",
-                        localField: "program_id",
-                        foreignField: "_id",
-                        as: "program",
-                        pipeline: [{ $project: { school: 1, program_name: 1 } }]
+                        documentthreads: 1,
+                        firstname: 1,
+                        lastname: 1
                     }
                 }
             ])
             .toArray();
-        return recentThreads;
+        return activeThreads;
     } catch (error) {
         console.error("Error fetching threads:", error);
         throw error;
@@ -72,20 +116,54 @@ const getRecentThreads = async () => {
     }
 };
 
+const getFirstFileMsgInThread = (thread) => {
+    const messages = thread.messages || [];
+    const studentId = thread?.student_id?.toString();
+    if (!messages || messages.length === 0 || !studentId) {
+        return false;
+    }
+
+    const firstMsg = messages.find((message) => {
+        const fromStudent = message.user_id.toString() === studentId;
+        const hasFile = message.file && message.file.length > 0;
+        return fromStudent && hasFile;
+    });
+
+    return firstMsg ? firstMsg.createdAt : null;
+};
+
+const getStudentEarliestFileMsg = (threads) => {
+    if (!threads || threads.length === 0) {
+        return null;
+    }
+    // Get all createdAt dates from studentFileMsgInThread, ignoring nulls
+    const dates = threads
+        .map(getFirstFileMsgInThread)
+        .filter((firstMsgDatetime) => firstMsgDatetime !== null && firstMsgDatetime !== undefined)
+        .map((firstMsgDatetime) => new Date(firstMsgDatetime));
+
+    if (dates.length === 0) {
+        return null;
+    }
+
+    // Return the earliest date
+    return new Date(Math.min(...dates));
+};
+
 /**
  * Slack message utilities
  */
-const createStudentThreadLink = (thread) => {
+const createStudentThreadLink = (threads) => {
     const studentName = thread.student?.[0]
         ? `${thread.student[0].firstname} ${thread.student[0].lastname}`
         : "Unknown Student";
-    const studentProfileLink = `<https://taigerconsultancy-portal.com/student-database/${thread.student_id}|${studentName}>`;
-    const threadLink = `<https://taigerconsultancy-portal.com/document-modification/${thread._id}|View Thread>`;
+    const studentProfileLink = `<${TENANT_PORTAL_LINK}student-database/${thread.student_id}|${studentName}>`;
     const programInfo = thread.program?.[0]
-        ? `${thread.program[0].school} - ${thread.program[0].program_name}`
+        ? `${thread.program[0].program_name}, ${thread.program[0].school}`
         : "N/A";
+    const threadLink = `<${TENANT_PORTAL_LINK}document-modification/${thread._id}|${programInfo}>`;
 
-    return `- ${studentProfileLink} - ${threadLink}\n\t*${programInfo}*`;
+    return `- ${studentProfileLink} — ${threadLink}`;
 };
 
 /**
@@ -264,10 +342,16 @@ const sendSlackMessage = async (channelId, message = "", blocks = []) => {
  */
 const sendEssayAssignmentReminder = async () => {
     try {
-        const threads = await getRecentThreads();
-        const messageBlocks = getEssayAssignmentReminderText(threads);
-        if (messageBlocks) {
-            await sendSlackMessage(channelId, "", messageBlocks);
+        // const threads = await getRecentThreads();
+        // const messageBlocks = getEssayAssignmentReminderText(threads);
+        // await sendSlackMessage(channelId, "", messageBlocks);
+
+        const threads = await getNoEditorStudentActiveThreads();
+        for (const thread of threads) {
+            const date = getStudentEarliestFileMsg(thread.documentthreads);
+            if (date) {
+                console.log("Student Need ->", thread.firstname, thread.lastname, date, thread._id);
+            }
         }
     } catch (error) {
         console.error("Error in sendEssayAssignmentReminder:", error);
