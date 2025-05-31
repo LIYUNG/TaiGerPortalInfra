@@ -152,43 +152,31 @@ const getStudentEarliestFileMsg = (threads) => {
 
 /**
  * Slack message utilities
+ * firstFileMsgTime, msgAgeByDay
  */
-const createStudentThreadLink = (threads) => {
-    const studentName = thread.student?.[0]
-        ? `${thread.student[0].firstname} ${thread.student[0].lastname}`
-        : "Unknown Student";
-    const studentProfileLink = `<${TENANT_PORTAL_LINK}student-database/${thread.student_id}|${studentName}>`;
-    const programInfo = thread.program?.[0]
-        ? `${thread.program[0].program_name}, ${thread.program[0].school}`
-        : "N/A";
-    const threadLink = `<${TENANT_PORTAL_LINK}document-modification/${thread._id}|${programInfo}>`;
-
-    return `- ${studentProfileLink} — ${threadLink}`;
-};
-
-/**
- * Filters threads based on their age
- * @param {Array} threads - Array of thread objects
- * @param {number} days - Number of days to check
- * @returns {Array} Filtered threads
- */
-const filterThreadsByAge = (threads, days) => {
-    return threads;
+const createStudentLink = (student) => {
+    const studentName = student ? `${student.firstname} ${student.lastname}` : "Unknown Student";
+    const cleanDatetime = new Date(student?.firstFileMsgTime).toLocaleString("en-CA", {
+        dateStyle: "short",
+        timeStyle: "short"
+    });
+    const studentProfileLink = `<${TENANT_PORTAL_LINK}student-database/${student._id}|${studentName}>`;
+    return `- ${studentProfileLink}: *${student?.msgAgeByDay}* days since first file message. (${cleanDatetime})`;
 };
 
 /**
  * Creates a formatted message for a specific time period
- * @param {Array} threads - Array of thread objects
+ * @param {Array} students - Array of thread objects
  * @param {number} days - Number of days
  * @param {boolean} shouldTag - Whether to include member tags
  * @returns {string} Formatted message
  */
-const createTimeBasedMessage = (threads, days, tagMember = []) => {
-    if (!threads || threads.length === 0) {
+const createTimeBasedMessage = (students, days, tagMember = []) => {
+    if (!students || students.length === 0) {
         return null;
     }
 
-    const studentThreadsList = threads.map(createStudentThreadLink).join("\n\n");
+    const studentThreadsList = students.map(createStudentLink).join("\n\n");
 
     const memberTags =
         tagMember.length > 0 ? `\n\n cc: ${tagMember.map((member) => "<@" + member + ">")}` : "";
@@ -198,11 +186,11 @@ const createTimeBasedMessage = (threads, days, tagMember = []) => {
 
 /**
  * Generates the reminder message blocks for Slack
- * @param {Array} threads - Array of thread objects
+ * @param {Array} students - Array of thread objects
  * @returns {Array} Slack message blocks
  */
-const getEssayAssignmentReminderText = (threads) => {
-    if (!threads || threads.length === 0) {
+const getEssayAssignmentReminderText = (students) => {
+    if (!students || students.length === 0) {
         return null;
     }
 
@@ -217,15 +205,21 @@ const getEssayAssignmentReminderText = (threads) => {
     });
 
     // Filter threads for different time periods
-    const sevenDayThreads = filterThreadsByAge(threads, 7);
-    const threeDayThreads = filterThreadsByAge(threads, 3);
+    const sevenDayStudents = students.filter((student) => {
+        const msgAgeByDay = student?.msgAgeByDay;
+        return msgAgeByDay > 7;
+    });
+    const threeDayStudents = students.filter((student) => {
+        const msgAgeByDay = student?.msgAgeByDay;
+        return msgAgeByDay > 3 && msgAgeByDay <= 7;
+    });
 
     // Create messages only if there are threads for each period
-    const sevenDayMessage = createTimeBasedMessage(sevenDayThreads, 7, [
+    const sevenDayMessage = createTimeBasedMessage(sevenDayStudents, 7, [
         slackMemberIds.David,
         slackMemberIds.Sydney
     ]);
-    const threeDayMessage = createTimeBasedMessage(threeDayThreads, 3, [slackMemberIds.Lena]);
+    const threeDayMessage = createTimeBasedMessage(threeDayStudents, 3, [slackMemberIds.Lena]);
 
     const blocks = [
         {
@@ -346,13 +340,29 @@ const sendEssayAssignmentReminder = async () => {
         // const messageBlocks = getEssayAssignmentReminderText(threads);
         // await sendSlackMessage(channelId, "", messageBlocks);
 
-        const threads = await getNoEditorStudentActiveThreads();
-        for (const thread of threads) {
-            const date = getStudentEarliestFileMsg(thread.documentthreads);
-            if (date) {
-                console.log("Student Need ->", thread.firstname, thread.lastname, date, thread._id);
-            }
+        const studentThreads = await getNoEditorStudentActiveThreads();
+        const needEditorStudents = studentThreads
+            .map((student) => {
+                const firstFileMsgTime = getStudentEarliestFileMsg(student.documentthreads);
+                const msgAgeByDay = firstFileMsgTime
+                    ? Math.floor((new Date() - new Date(firstFileMsgTime)) / (1000 * 60 * 60 * 24))
+                    : null;
+                return firstFileMsgTime ? { ...student, firstFileMsgTime, msgAgeByDay } : null;
+            })
+            .filter((student) => student !== null);
+
+        for (const student of needEditorStudents) {
+            console.log(
+                "Student Need ->",
+                student.firstname,
+                student.lastname,
+                student.firstFileMsgTime,
+                student._id
+            );
         }
+
+        const messageBlocks = getEssayAssignmentReminderText(needEditorStudents);
+        await sendSlackMessage(channelId, "", messageBlocks);
     } catch (error) {
         console.error("Error in sendEssayAssignmentReminder:", error);
     }
