@@ -116,11 +116,16 @@ const getNoEditorStudentActiveThreads = async () => {
     }
 };
 
+/**
+ * Retrieves the creation date of the first message in a thread sent by the student that contains a file.
+ * @param {Object} thread - The thread object containing messages and student information.
+ * @returns {string|null} The `createdAt` timestamp of the first matching message, or `null` if none found.
+ */
 const getFirstFileMsgInThread = (thread) => {
     const messages = thread.messages || [];
     const studentId = thread?.student_id?.toString();
     if (!messages || messages.length === 0 || !studentId) {
-        return false;
+        return null;
     }
 
     const firstMsg = messages.find((message) => {
@@ -132,6 +137,12 @@ const getFirstFileMsgInThread = (thread) => {
     return firstMsg ? firstMsg.createdAt : null;
 };
 
+/**
+ * Returns the earliest file message date from a list of threads.
+ *
+ * @param {Array} threads - An array of thread objects to search for file messages.
+ * @returns {Date|null} The earliest file message date as a Date object, or null if none found.
+ */
 const getStudentEarliestFileMsg = (threads) => {
     if (!threads || threads.length === 0) {
         return null;
@@ -151,8 +162,11 @@ const getStudentEarliestFileMsg = (threads) => {
 };
 
 /**
- * Slack message utilities
- * firstFileMsgTime, msgAgeByDay
+ * Formats a Slack message link for a student, including their name, profile link,
+ * days since their first file message, and the date/time of that message.
+ *
+ * @param {Object} student - The student object containing relevant information.
+ * @returns {string} A formatted Slack message string with the student's profile link and message info.
  */
 const formatStudentSlackLink = (student) => {
     const studentName = student ? `${student.firstname} ${student.lastname}` : "Unknown Student";
@@ -161,7 +175,7 @@ const formatStudentSlackLink = (student) => {
         timeStyle: "short"
     });
     const studentProfileLink = `<${TENANT_PORTAL_LINK}student-database/${student._id}|${studentName}>`;
-    return `- ${studentProfileLink}: *${student?.msgAgeByDay}* days since first file message. (${cleanDatetime})`;
+    return `- ${studentProfileLink}: *${student?.daysSinceMessage}* days since first file message. (${cleanDatetime})`;
 };
 
 /**
@@ -206,12 +220,12 @@ const generateEditorAssignmentSlackBlocks = (students) => {
 
     // Filter threads for different time periods
     const sevenDayStudents = students.filter((student) => {
-        const msgAgeByDay = student?.msgAgeByDay;
-        return msgAgeByDay > 7;
+        const daysSinceMessage = student?.daysSinceMessage;
+        return daysSinceMessage > 7;
     });
     const threeDayStudents = students.filter((student) => {
-        const msgAgeByDay = student?.msgAgeByDay;
-        return msgAgeByDay > 3 && msgAgeByDay <= 7;
+        const daysSinceMessage = student?.daysSinceMessage;
+        return daysSinceMessage > 3 && daysSinceMessage <= 7;
     });
 
     // Create messages only if there are threads for each period
@@ -342,10 +356,10 @@ const sendEditorAssignmentReminder = async () => {
         const needEditorStudents = studentThreads
             .map((student) => {
                 const firstFileMsgTime = getStudentEarliestFileMsg(student.documentthreads);
-                const msgAgeByDay = firstFileMsgTime
+                const daysSinceMessage = firstFileMsgTime
                     ? Math.floor((new Date() - new Date(firstFileMsgTime)) / (1000 * 60 * 60 * 24))
                     : null;
-                return firstFileMsgTime ? { ...student, firstFileMsgTime, msgAgeByDay } : null;
+                return firstFileMsgTime ? { ...student, firstFileMsgTime, daysSinceMessage } : null;
             })
             .filter((student) => student !== null);
 
@@ -355,9 +369,6 @@ const sendEditorAssignmentReminder = async () => {
         }
         const messageBlocks = generateEditorAssignmentSlackBlocks(needEditorStudents);
         await postSlackMessage(channelId, "", messageBlocks);
-        // for (const student of needEditorStudents) {
-        //     console.log(student.firstname, student.lastname, student._id, student.firstFileMsgTime);
-        // }
         console.log(
             `Editor assignment reminder sent successfully. (${needEditorStudents.length} students)`
         );
