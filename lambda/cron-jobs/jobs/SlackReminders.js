@@ -313,7 +313,9 @@ const sendSlackMessage = async (channelId, message = "", blocks = []) => {
             body: JSON.stringify({
                 channel: channelId,
                 text: message,
-                blocks: blocks
+                blocks: blocks,
+                unfurl_links: false, // disable link previews
+                unfurl_media: false
             })
         });
 
