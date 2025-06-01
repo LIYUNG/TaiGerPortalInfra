@@ -181,7 +181,7 @@ const createTimeBasedMessage = (students, days, tagMember = []) => {
     const memberTags =
         tagMember.length > 0 ? `\n\n cc: ${tagMember.map((member) => "<@" + member + ">")}` : "";
 
-    return `📌 *Over ${days} Days - Editor or Essay Writer Not Assigned* \n*超過${days}天未指派顧問或編輯：* \n\n${studentThreadsList}${memberTags}`;
+    return `📌 *Over ${days} Days - Editor not Assigned* \n*超過${days}天未指派顧問或編輯：* \n\n${studentThreadsList}${memberTags}`;
 };
 
 /**
@@ -189,7 +189,7 @@ const createTimeBasedMessage = (students, days, tagMember = []) => {
  * @param {Array} students - Array of thread objects
  * @returns {Array} Slack message blocks
  */
-const getEssayAssignmentReminderText = (students) => {
+const getEditorAssignmentReminderText = (students) => {
     if (!students || students.length === 0) {
         return null;
     }
@@ -226,7 +226,7 @@ const getEssayAssignmentReminderText = (students) => {
             type: "header",
             text: {
                 type: "plain_text",
-                text: "🔔 [Attention] Request for Essay Writer Assignment | 指派提醒通知"
+                text: "🔔 [Attention] Request for Editor Assignment | 指派提醒通知"
             }
         },
         {
@@ -332,14 +332,10 @@ const sendSlackMessage = async (channelId, message = "", blocks = []) => {
 };
 
 /**
- * Main function to send essay assignment reminders
+ * Main function to send Editor assignment reminders
  */
-const sendEssayAssignmentReminder = async () => {
+const sendEditorAssignmentReminder = async () => {
     try {
-        // const threads = await getRecentThreads();
-        // const messageBlocks = getEssayAssignmentReminderText(threads);
-        // await sendSlackMessage(channelId, "", messageBlocks);
-
         const studentThreads = await getNoEditorStudentActiveThreads();
         const needEditorStudents = studentThreads
             .map((student) => {
@@ -351,22 +347,22 @@ const sendEssayAssignmentReminder = async () => {
             })
             .filter((student) => student !== null);
 
-        for (const student of needEditorStudents) {
-            console.log(
-                "Student Need ->",
-                student.firstname,
-                student.lastname,
-                student.firstFileMsgTime,
-                student._id
-            );
+        if (needEditorStudents.length === 0) {
+            console.log("No students need reminders.");
+            return;
         }
-
-        const messageBlocks = getEssayAssignmentReminderText(needEditorStudents);
+        const messageBlocks = getEditorAssignmentReminderText(needEditorStudents);
         await sendSlackMessage(channelId, "", messageBlocks);
+        // for (const student of needEditorStudents) {
+        //     console.log(student.firstname, student.lastname, student._id, student.firstFileMsgTime);
+        // }
+        console.log(
+            `Editor assignment reminder sent successfully. (${needEditorStudents.length} students)`
+        );
     } catch (error) {
-        console.error("Error in sendEssayAssignmentReminder:", error);
+        console.error("Error in sendEditorAssignmentReminder:", error);
     }
 };
 
 // Execute the reminder
-sendEssayAssignmentReminder();
+sendEditorAssignmentReminder();
