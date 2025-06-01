@@ -54,7 +54,6 @@
         "@aws-sdk/client-secrets-manager": "^3.682.0",
         "@aws-sdk/client-ses": "^3.721.0",
         "@taiger-common/core": "^1.0.7",
-        "@taiger-common/model": "^1.0.23",
         "aws-cdk-lib": "^2.173.4",
         "bottleneck": "^2.19.5",
         "constructs": "^10.4.2",
