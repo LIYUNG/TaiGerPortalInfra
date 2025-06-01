@@ -33,7 +33,7 @@ const getNoEditorStudentActiveThreads = async () => {
         const db = client.db("TaiGer_Prod");
         const userCollection = db.collection("users");
 
-        const activeThreads = await userCollection
+        const studentsWithActiveThreads = await userCollection
             .aggregate([
                 {
                     $match: {
@@ -104,7 +104,7 @@ const getNoEditorStudentActiveThreads = async () => {
                 }
             ])
             .toArray();
-        return activeThreads;
+        return studentsWithActiveThreads;
     } catch (error) {
         console.error("Error fetching threads:", error);
         throw error;
@@ -154,7 +154,7 @@ const getStudentEarliestFileMsg = (threads) => {
  * Slack message utilities
  * firstFileMsgTime, msgAgeByDay
  */
-const createStudentLink = (student) => {
+const formatStudentSlackLink = (student) => {
     const studentName = student ? `${student.firstname} ${student.lastname}` : "Unknown Student";
     const cleanDatetime = new Date(student?.firstFileMsgTime).toLocaleString("en-CA", {
         dateStyle: "short",
@@ -176,7 +176,7 @@ const createTimeBasedMessage = (students, days, tagMember = []) => {
         return null;
     }
 
-    const studentThreadsList = students.map(createStudentLink).join("\n\n");
+    const studentThreadsList = students.map(formatStudentSlackLink).join("\n\n");
 
     const memberTags =
         tagMember.length > 0 ? `\n\n cc: ${tagMember.map((member) => "<@" + member + ">")}` : "";
@@ -189,7 +189,7 @@ const createTimeBasedMessage = (students, days, tagMember = []) => {
  * @param {Array} students - Array of thread objects
  * @returns {Array} Slack message blocks
  */
-const getEditorAssignmentReminderText = (students) => {
+const generateEditorAssignmentSlackBlocks = (students) => {
     if (!students || students.length === 0) {
         return null;
     }
@@ -297,7 +297,7 @@ const getEditorAssignmentReminderText = (students) => {
  * @param {Array} blocks - The message blocks
  * @returns {Promise<boolean>} Success status
  */
-const sendSlackMessage = async (channelId, message = "", blocks = []) => {
+const postSlackMessage = async (channelId, message = "", blocks = []) => {
     if (!channelId) {
         console.error("Channel ID is required");
         return false;
@@ -353,8 +353,8 @@ const sendEditorAssignmentReminder = async () => {
             console.log("No students need reminders.");
             return;
         }
-        const messageBlocks = getEditorAssignmentReminderText(needEditorStudents);
-        await sendSlackMessage(channelId, "", messageBlocks);
+        const messageBlocks = generateEditorAssignmentSlackBlocks(needEditorStudents);
+        await postSlackMessage(channelId, "", messageBlocks);
         // for (const student of needEditorStudents) {
         //     console.log(student.firstname, student.lastname, student._id, student.firstFileMsgTime);
         // }
