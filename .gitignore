@@ -5,6 +5,10 @@
 node_modules
 dist
 .eslintcache
+
+# aws sam build
+.aws-sam
+
 # CDK asset staging directory
 .cdk.staging
 cdk.out

@@ -1,0 +1,17 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Resources:
+    cronJobFunction:
+        Type: AWS::Serverless::Function
+        Properties:
+            Handler: ./lambda/cron-jobs/index.handler
+            Runtime: nodejs18.x
+            CodeUri: ./
+            MemorySize: 1024
+            Timeout: 15
+            Events:
+                ApiEvent:
+                    Type: Api
+                    Properties:
+                        Path: /cron-jobs
+                        Method: post
