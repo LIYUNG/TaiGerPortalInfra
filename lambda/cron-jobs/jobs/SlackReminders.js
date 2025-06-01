@@ -1,25 +1,10 @@
-const { MongoClient } = require("mongodb");
+const { connectToDatabase } = require("../../db");
 const {
     TENANT_PORTAL_LINK,
-    connStr,
     botToken,
     channelId,
     slackMemberIds
 } = require("../../utils/constants");
-
-/**
- * Database connection utilities
- */
-const connectDB = async () => {
-    try {
-        const client = new MongoClient(connStr);
-        await client.connect();
-        return client;
-    } catch (error) {
-        console.error("Error connecting to database:", error);
-        throw error;
-    }
-};
 
 /**
  * Retrieves all active student users who have no assigned editors and at least one application,
@@ -27,12 +12,10 @@ const connectDB = async () => {
  * @returns {Promise<Array<Object>>} An array of student user objects, each including their matching document threads.
  */
 const getNoEditorStudentActiveThreads = async () => {
-    let client;
+    let db;
     try {
-        client = await connectDB();
-        const db = client.db("TaiGer_Prod");
+        db = await connectToDatabase();
         const userCollection = db.collection("users");
-
         const studentsWithActiveThreads = await userCollection
             .aggregate([
                 {
@@ -108,11 +91,6 @@ const getNoEditorStudentActiveThreads = async () => {
     } catch (error) {
         console.error("Error fetching threads:", error);
         throw error;
-    } finally {
-        if (client) {
-            await client.close();
-            console.log("Database connection closed");
-        }
     }
 };
 
@@ -378,4 +356,8 @@ const sendEditorAssignmentReminder = async () => {
 };
 
 // Execute the reminder
-sendEditorAssignmentReminder();
+sendEditorAssignmentReminder()
+    .then(() => process.exit(0))
+    .catch(() => process.exit(1));
+
+module.exports = { sendEditorAssignmentReminder };
