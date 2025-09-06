@@ -1,6 +1,7 @@
 const { AssignEditorTasksReminderEmails } = require("./jobs/AssignEditorTasksReminderEmails");
 const { MongoDBDatabaseDailySnapshot } = require("./jobs/MongoDBDatabaseDailySnapshot");
 const { MongoDBDataPipelineDailySnapshot } = require("./jobs/MongoDBDataPipelineDailySnapshot");
+const { InterviewSurveyReminderEmails } = require("./jobs/InterviewSurveyReminderEmails");
 
 exports.handler = async (event) => {
     console.log("Received event:", JSON.stringify(event, null, 2));
@@ -18,6 +19,9 @@ exports.handler = async (event) => {
         } else if (jobType === "AssignEditorTasksReminderEmails") {
             console.log("Running Job AssignEditorTasksReminderEmails");
             await AssignEditorTasksReminderEmails();
+        } else if (jobType === "InterviewSurveyReminderEmails") {
+            console.log("Running Job InterviewSurveyReminderEmails");
+            await InterviewSurveyReminderEmails();
         } else {
             console.warn(`No matching job for jobType: ${jobType}`);
         }
