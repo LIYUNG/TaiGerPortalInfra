@@ -50,7 +50,7 @@ export class CronJobsConstruct extends Construct {
         this.lambda = new NodejsFunction(this, `Cron-Jobs-${props.stageName}`, {
             entry: path.join(lambdaAppDir, "index.js"),
             handler: "handler",
-            runtime: Runtime.NODEJS_18_X,
+            runtime: Runtime.NODEJS_20_X,
             memorySize: 512,
             timeout: cdk.Duration.seconds(600), // Set timeout here (up to 600 seconds)
             // Adding environment variable for the S3 bucket name
