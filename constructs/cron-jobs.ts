@@ -55,6 +55,12 @@ export class CronJobsConstruct extends Construct {
             timeout: cdk.Duration.seconds(600), // Set timeout here (up to 600 seconds)
             // Adding environment variable for the S3 bucket name
             reservedConcurrentExecutions: 10,
+            bundling: {
+                esbuildArgs: { "--bundle": true },
+                target: "es2020",
+                platform: "node",
+                minify: true
+            },
             environment: {
                 MONGODB_URI_SECRET_NAME: props.mongodbUriSecretName,
                 MONGODB_NAME: props.mongoDBName,
