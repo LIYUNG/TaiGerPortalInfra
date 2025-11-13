@@ -9,7 +9,7 @@ import {
     GITHUB_TOKEN
 } from "../configuration/dependencies";
 import { PipelineAppStage } from "./app-stage";
-import { Region, STAGES } from "../constants";
+import { STAGES } from "../constants";
 import { PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { Construct } from "constructs";
 import { BlockPublicAccess, Bucket, BucketEncryption } from "aws-cdk-lib/aws-s3";

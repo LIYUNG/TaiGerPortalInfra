@@ -28,6 +28,7 @@ export class InfraStack extends cdk.Stack {
         this.externalBucket = new Bucket(this, `ExternalBucket-${props.stageName}`, {
             bucketName: props.externalS3BucketName,
             versioned: false,
+            enforceSSL: true,
             removalPolicy: cdk.RemovalPolicy.DESTROY, // For testing; in production, consider RETAIN
             lifecycleRules: [
                 {
