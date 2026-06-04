@@ -1,6 +1,7 @@
 import { InfraStack } from "./infrastack";
 import { Stage, StageProps } from "aws-cdk-lib";
 import { ServiceStack } from "./servicestack";
+import { ServiceDashboardStack } from "./service-dashboard-stack";
 import { Construct } from "constructs";
 // import { AuthStack } from "./authstack";
 
@@ -48,6 +49,15 @@ export class PipelineAppStage extends Stage {
         //     domainStage: props.domainStage,
         //     isProd: props.isProd
         // });
+
+        // CloudWatch dashboard for the TaiGerPortalService ECS/ALB deployment
+        // (deployed separately by TaiGerPortalServiceCDK). It is keyed on
+        // `domainStage` ("beta"/"prod") because that is the stage suffix used in
+        // the service's resource names, and it deploys into the same region.
+        new ServiceDashboardStack(this, `ServiceDashboardStack-${props.stageName}`, {
+            env: props.env,
+            serviceStageName: props.domainStage
+        });
 
         serviceStack.addDependency(infraStack);
     }

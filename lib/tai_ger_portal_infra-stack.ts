@@ -1,6 +1,7 @@
 import * as cdk from "aws-cdk-lib";
 import { Duration, RemovalPolicy, SecretValue } from "aws-cdk-lib";
 import { CodePipeline, CodePipelineSource, ShellStep } from "aws-cdk-lib/pipelines";
+import { PipelineType } from "aws-cdk-lib/aws-codepipeline";
 import * as codepipeline_actions from "aws-cdk-lib/aws-codepipeline-actions";
 import {
     GITHUB_OWNER,
@@ -31,6 +32,7 @@ export class TaiGerPortalInfraStack extends cdk.Stack {
         // Create the high-level CodePipeline
         const pipeline = new CodePipeline(this, "Pipeline", {
             pipelineName: "TaiGerPortalInfraPipeline",
+            pipelineType: PipelineType.V2,
             artifactBucket: new Bucket(this, `${GITHUB_REPO}-ArtifactBucket`, {
                 bucketName: `${GITHUB_REPO}-pipeline-artifact-bucket`.toLowerCase(),
                 removalPolicy: RemovalPolicy.DESTROY,
