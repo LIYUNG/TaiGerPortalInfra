@@ -32,6 +32,7 @@ describe("ServiceDashboardStack", () => {
         expect(body).toContain("TaiGerPortalService-ec2-cluster-beta");
         expect(body).toContain("TaiGerPortalService-ecs-ec2-beta");
         expect(body).toContain("app/TaiGerPortalService-alb-beta");
+        expect(body).toContain("targetgroup/TaiGerPortalService-tg-beta");
         expect(body).toContain("/ecs/ec2/TaiGerPortalService-beta");
 
         // Regression: the ALB SEARCH term must NOT be double-quoted. A quoted

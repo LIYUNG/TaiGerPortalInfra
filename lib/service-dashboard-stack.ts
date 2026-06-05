@@ -47,6 +47,10 @@ export class ServiceDashboardStack extends cdk.Stack {
         const clusterName = `${appName}-ec2-cluster-${stageName}`;
         const serviceName = `${appName}-ecs-ec2-${stageName}`;
         const albName = `${appName}-alb-${stageName}`;
+        // Target group name set explicitly in TaiGerPortalServiceCDK
+        // (`listener.addTargets`), kept deterministic so host-count metrics can be
+        // matched by name. The metric `TargetGroup` dimension is `targetgroup/<name>/<hash>`.
+        const targetGroupName = `${appName}-tg-${stageName}`;
         const ecsLogGroup = `/ecs/ec2/${appName}-${stageName}`;
 
         const period = Duration.minutes(1);
@@ -67,17 +71,23 @@ export class ServiceDashboardStack extends cdk.Stack {
                 label
             });
 
-        // ALB metrics are dimensioned by the LoadBalancer ARN suffix
-        // (`app/<name>/<hash>`); SEARCH matches it by the name prefix so the
-        // dashboard does not need the runtime-generated hash. `schema` selects
-        // metrics carrying exactly those dimensions (e.g. the LB aggregate, not
-        // per-AZ breakdowns). The `app/<name>` term is left UNQUOTED so SEARCH
-        // does a partial match against the dimension value; quoting it forces an
-        // exact-token match that never matches `app/<name>/<hash>`, so the
-        // widgets render empty. Label is left empty so each series keeps its name.
-        const albSearch = (schema: string, metricName: string, statistic: string) =>
+        // ALB/target-group metrics are dimensioned by ARN suffixes
+        // (`app/<name>/<hash>`, `targetgroup/<name>/<hash>`); SEARCH matches them
+        // by the name prefix so the dashboard does not need the runtime-generated
+        // hash. `schema` selects metrics carrying exactly those dimensions (e.g.
+        // the LB aggregate, not per-AZ breakdowns). `matchTerm` is the dimension
+        // value prefix to match and is left UNQUOTED so SEARCH does a partial
+        // match; quoting it forces an exact-token match that never matches the
+        // `.../<hash>` value, so the widgets render empty. Label is left empty so
+        // each series keeps its name.
+        const albSearch = (
+            schema: string,
+            metricName: string,
+            statistic: string,
+            matchTerm: string = `app/${albName}`
+        ) =>
             new MathExpression({
-                expression: `SEARCH('{${schema}} MetricName="${metricName}" app/${albName}', '${statistic}', ${periodSeconds})`,
+                expression: `SEARCH('{${schema}} MetricName="${metricName}" ${matchTerm}', '${statistic}', ${periodSeconds})`,
                 label: "",
                 period
             });
@@ -137,12 +147,14 @@ export class ServiceDashboardStack extends cdk.Stack {
                     albSearch(
                         "AWS/ApplicationELB,LoadBalancer,TargetGroup",
                         "HealthyHostCount",
-                        "Maximum"
+                        "Maximum",
+                        `targetgroup/${targetGroupName}`
                     ),
                     albSearch(
                         "AWS/ApplicationELB,LoadBalancer,TargetGroup",
                         "UnHealthyHostCount",
-                        "Maximum"
+                        "Maximum",
+                        `targetgroup/${targetGroupName}`
                     )
                 ]
             }),
