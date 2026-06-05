@@ -71,10 +71,13 @@ export class ServiceDashboardStack extends cdk.Stack {
         // (`app/<name>/<hash>`); SEARCH matches it by the name prefix so the
         // dashboard does not need the runtime-generated hash. `schema` selects
         // metrics carrying exactly those dimensions (e.g. the LB aggregate, not
-        // per-AZ breakdowns). Label is left empty so each series keeps its name.
+        // per-AZ breakdowns). The `app/<name>` term is left UNQUOTED so SEARCH
+        // does a partial match against the dimension value; quoting it forces an
+        // exact-token match that never matches `app/<name>/<hash>`, so the
+        // widgets render empty. Label is left empty so each series keeps its name.
         const albSearch = (schema: string, metricName: string, statistic: string) =>
             new MathExpression({
-                expression: `SEARCH('{${schema}} MetricName="${metricName}" "app/${albName}"', '${statistic}', ${periodSeconds})`,
+                expression: `SEARCH('{${schema}} MetricName="${metricName}" app/${albName}', '${statistic}', ${periodSeconds})`,
                 label: "",
                 period
             });
