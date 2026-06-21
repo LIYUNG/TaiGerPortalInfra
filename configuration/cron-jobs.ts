@@ -33,6 +33,16 @@ export const CRON_JOBS: CronJobConfig[] = [
             year: "*"
         },
         description: "Assign Editor reminder for editor manager"
+    },
+    {
+        jobType: "InterviewSurveyReminderEmails",
+        schedule: {
+            minute: "0",
+            hour: "9",
+            day: "*",
+            month: "*",
+            year: "*"
+        },
+        description: "Send reminders for interview survey completion"
     }
-    // Add new jobs here easily
 ];
