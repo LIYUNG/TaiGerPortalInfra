@@ -1,10 +1,42 @@
-const { isNotArchiv } = require("@taiger-common/core");
-const { connectToDatabase } = require("../../db");
-const {
-    sendAssignEditorReminderEmailV2
-} = require("../../email/email-contents/sendAssignEditorReminderEmail");
+import { isNotArchiv } from "@taiger-common/core";
+import type { ObjectId } from "mongodb";
 
-async function AssignEditorTasksReminderEmails() {
+import { connectToDatabase } from "../../db";
+import {
+    NoEditorStudent,
+    sendAssignEditorReminderEmailV2
+} from "../../email/email-contents/sendAssignEditorReminderEmail";
+
+/** Projected user shape produced by the `$lookup` stages below. */
+interface UserSummary {
+    email: string;
+    archiv?: boolean;
+    firstname?: string;
+    lastname?: string;
+}
+
+/** Shape of a single document returned by the students aggregation. */
+interface StudentAggregate {
+    _id: ObjectId;
+    firstname?: string;
+    lastname?: string;
+    needEditor?: boolean;
+    agents: UserSummary[];
+    editors: UserSummary[];
+}
+
+/** Shape of a single document returned by the permissions aggregation. */
+interface PermissionAggregate {
+    canAssignEditors?: boolean;
+    user_id: {
+        _id: ObjectId;
+        email: string;
+        firstname?: string;
+        lastname?: string;
+    };
+}
+
+export async function AssignEditorTasksReminderEmails(): Promise<void> {
     console.log("Executing tasks for Job AssignEditorTasksReminderEmails...");
     try {
         // Connect to MongoDB
@@ -14,7 +46,7 @@ async function AssignEditorTasksReminderEmails() {
 
         // Fetch students (users with role 'student')
         const students = await usersCollection
-            .aggregate([
+            .aggregate<StudentAggregate>([
                 {
                     $match: {
                         role: "Student", // Filtering for users who are students
@@ -77,7 +109,7 @@ async function AssignEditorTasksReminderEmails() {
 
         // inform editor-lead
         const permissions = await permissionsCollection
-            .aggregate([
+            .aggregate<PermissionAggregate>([
                 {
                     $match: {
                         canAssignEditors: true
@@ -120,11 +152,15 @@ async function AssignEditorTasksReminderEmails() {
 
         console.log("noEditorStudents: ", noEditorStudents);
 
-        const agentsMap = new Map();
+        const agentsMap = new Map<string, { agent: UserSummary; students: NoEditorStudent[] }>();
 
         for (const student of noEditorStudents) {
             if (student.needEditor) {
-                const activeAgents = student.agents.filter(isNotArchiv);
+                // `isNotArchiv` only reads `archiv`; the projection above omits
+                // `role`, which its `UserProps` signature nominally requires.
+                const activeAgents = student.agents.filter((agent) =>
+                    isNotArchiv({ role: "", ...agent })
+                );
 
                 activeAgents.forEach((agent) => {
                     const key = agent.email; // Use agent's email as the unique key
@@ -134,7 +170,7 @@ async function AssignEditorTasksReminderEmails() {
                             students: []
                         });
                     }
-                    agentsMap.get(key).students.push({
+                    agentsMap.get(key)!.students.push({
                         firstname: student.firstname,
                         lastname: student.lastname,
                         _id: student._id.toString()
@@ -167,9 +203,9 @@ async function AssignEditorTasksReminderEmails() {
 
             console.log("noEditorStudentsNeedEditor: ", noEditorStudentsNeedEditor);
 
-            if (noEditorStudentsNeedEditor?.length > 0) {
+            if (noEditorStudentsNeedEditor.length > 0) {
                 // Step 2: Send an email to each permission user with the list of students
-                const emailPromises = permissions.map((permission) => {
+                const permissionEmailPromises = permissions.map((permission) => {
                     const userName = `${permission.user_id.firstname} ${permission.user_id.lastname}`;
 
                     // Format the list of student names for logging
@@ -190,12 +226,16 @@ async function AssignEditorTasksReminderEmails() {
                             address: permission.user_id.email
                         },
                         {
-                            noEditorStudents: noEditorStudentsNeedEditor
+                            noEditorStudents: noEditorStudentsNeedEditor.map((student) => ({
+                                firstname: student.firstname,
+                                lastname: student.lastname,
+                                _id: student._id.toString()
+                            }))
                         }
                     );
 
                     // Log the action
-                    emailPromise.then(() => {
+                    void emailPromise.then(() => {
                         console.log(
                             `${userName} is informed for assigning editor to ${noEditorStudentsNeedEditorStringified}`
                         );
@@ -205,7 +245,7 @@ async function AssignEditorTasksReminderEmails() {
                 });
 
                 // Step 3: Wait for all emails to be sent
-                await Promise.all(emailPromises);
+                await Promise.all(permissionEmailPromises);
             }
         }
     } catch (error) {
@@ -213,5 +253,3 @@ async function AssignEditorTasksReminderEmails() {
         throw error;
     }
 }
-
-module.exports = { AssignEditorTasksReminderEmails };

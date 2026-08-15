@@ -1,10 +1,27 @@
-const { sendEmail } = require("../config");
-const { SPLIT_LINE } = require("../email-template");
+import { SentMessageInfo } from "nodemailer";
 
-const BASE_DOCUMENT_FOR_AGENT_URL = (studentId) =>
-    new URL(`/student-database/${studentId}#profile`, process.env.ORIGIN).href;
+import { sendEmail } from "../config";
+import { SPLIT_LINE } from "../email-template";
+import { Recipient } from "../types";
+import { requireEnv } from "../../common/env";
 
-const sendAssignEditorReminderEmailV2 = async (recipient, payload) => {
+export interface NoEditorStudent {
+    _id: string;
+    firstname?: string;
+    lastname?: string;
+}
+
+export interface AssignEditorReminderPayload {
+    noEditorStudents: NoEditorStudent[];
+}
+
+const BASE_DOCUMENT_FOR_AGENT_URL = (studentId: string): string =>
+    new URL(`/student-database/${studentId}#profile`, requireEnv("ORIGIN")).href;
+
+export const sendAssignEditorReminderEmailV2 = async (
+    recipient: Recipient,
+    payload: AssignEditorReminderPayload
+): Promise<SentMessageInfo> => {
     let studentNames = "<ul>";
     for (let i = 0; i < payload.noEditorStudents.length; i += 1) {
         const studentName = `${payload.noEditorStudents[i].firstname} ${payload.noEditorStudents[i].lastname}`;
@@ -12,7 +29,6 @@ const sendAssignEditorReminderEmailV2 = async (recipient, payload) => {
         studentNames += `<li><a href="${studentIdLink}" target="_blank" class="mui-button" rel="noopener noreferrer">Assign Editor to ${studentName}</a></li>`;
     }
     studentNames += "</ul>";
-    // payload.noEditorStudents?.map((student)=>);
     const subject = "[DO NOT IGNORE] Assign Editor Reminder";
     const message = `\
 <p>Hi ${recipient.firstname} ${recipient.lastname},</p>
@@ -27,7 +43,7 @@ ${studentNames}
 
 <p>以下學生上傳了一份文件至他的 CVMLRL Cetner，但他目前並無任何編輯。</p>
 
-${studentNames} 
+${studentNames}
 
 <p><b>請指派編輯給以上學生。</b></p>
 
@@ -35,5 +51,3 @@ ${studentNames}
 
     return sendEmail(recipient, subject, message);
 };
-
-module.exports = { sendAssignEditorReminderEmailV2 };

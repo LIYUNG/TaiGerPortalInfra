@@ -48,7 +48,7 @@ export class CronJobsConstruct extends Construct {
 
         // Create the Lambda function
         this.lambda = new NodejsFunction(this, `Cron-Jobs-${props.stageName}`, {
-            entry: path.join(lambdaAppDir, "index.js"),
+            entry: path.join(lambdaAppDir, "index.ts"),
             handler: "handler",
             runtime: Runtime.NODEJS_20_X,
             memorySize: 512,
@@ -59,7 +59,12 @@ export class CronJobsConstruct extends Construct {
                 esbuildArgs: { "--bundle": true },
                 target: "es2020",
                 platform: "node",
-                minify: true
+                minify: true,
+                // Keep stack traces pointing at the .ts sources; paired with
+                // --enable-source-maps below.
+                sourceMap: true,
+                sourcesContent: false,
+                tsconfig: path.resolve(__dirname, "../tsconfig.json")
             },
             environment: {
                 MONGODB_URI_SECRET_NAME: props.mongodbUriSecretName,
@@ -67,7 +72,8 @@ export class CronJobsConstruct extends Construct {
                 EXTERNAL_S3_BUCKET_NAME: props.externalS3BucketName,
                 INTERNAL_MONGODB_S3_BUCKET_NAME: props.internalMongodbS3BucketName,
                 REGION: props.region,
-                ORIGIN: props.origin
+                ORIGIN: props.origin,
+                NODE_OPTIONS: "--enable-source-maps"
             }
         });
 

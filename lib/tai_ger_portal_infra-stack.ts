@@ -3,6 +3,7 @@ import { Duration, RemovalPolicy, SecretValue } from "aws-cdk-lib";
 import { CodePipeline, CodePipelineSource, ShellStep } from "aws-cdk-lib/pipelines";
 import { PipelineType } from "aws-cdk-lib/aws-codepipeline";
 import * as codepipeline_actions from "aws-cdk-lib/aws-codepipeline-actions";
+import { LinuxBuildImage } from "aws-cdk-lib/aws-codebuild";
 import {
     GITHUB_OWNER,
     GITHUB_PACKAGE_BRANCH,
@@ -49,9 +50,26 @@ export class TaiGerPortalInfraStack extends cdk.Stack {
             }),
             synth: new ShellStep("Synth", {
                 input: source,
-                commands: ["npm ci", "npm run build", "npx cdk synth"]
+                commands: [
+                    "npm ci",
+                    // The Lambda sources are TypeScript now and are bundled by
+                    // esbuild inside `cdk synth`, which does no type checking.
+                    // Type-check, lint and unit-test them here so a broken
+                    // handler fails the build instead of shipping.
+                    "npm run typecheck",
+                    "npm run lint",
+                    "npm run test",
+                    "npm run build",
+                    "npx cdk synth"
+                ]
             }),
             codeBuildDefaults: {
+                // `NodejsFunction` shells out to esbuild during synth; pin an
+                // image whose Node runtime is new enough for it and for the
+                // NODEJS_20_X bundling target.
+                buildEnvironment: {
+                    buildImage: LinuxBuildImage.STANDARD_7_0
+                },
                 rolePolicy: [
                     new PolicyStatement({
                         actions: [

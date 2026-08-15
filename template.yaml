@@ -4,8 +4,8 @@ Resources:
     cronJobFunction:
         Type: AWS::Serverless::Function
         Properties:
-            Handler: ./lambda/cron-jobs/index.handler
-            Runtime: nodejs18.x
+            Handler: index.handler
+            Runtime: nodejs20.x
             CodeUri: ./
             MemorySize: 1024
             Timeout: 15
@@ -15,3 +15,14 @@ Resources:
                     Properties:
                         Path: /cron-jobs
                         Method: post
+        Metadata:
+            # The handler is TypeScript, so let `sam build` run esbuild over it
+            # the same way the CDK NodejsFunction does.
+            BuildMethod: esbuild
+            BuildProperties:
+                Format: cjs
+                Minify: false
+                Sourcemap: true
+                Target: es2020
+                EntryPoints:
+                    - lambda/cron-jobs/index.ts

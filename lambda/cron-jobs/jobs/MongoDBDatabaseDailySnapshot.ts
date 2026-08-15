@@ -1,10 +1,13 @@
-const { PutObjectCommand } = require("@aws-sdk/client-s3");
-const { connectToDatabase } = require("../../db");
-const { s3Client } = require("../../aws");
-const { transformDocument } = require("../../common/utils");
+import { PutObjectCommand, PutObjectCommandInput } from "@aws-sdk/client-s3";
 
-async function MongoDBDatabaseDailySnapshot() {
+import { connectToDatabase } from "../../db";
+import { s3Client } from "../../aws";
+import { transformDocument } from "../../common/utils";
+import { requireEnv } from "../../common/env";
+
+export async function MongoDBDatabaseDailySnapshot(): Promise<void> {
     console.log("Executing tasks for Job MongoDBDatabaseDailySnapshot...");
+    const bucketName = requireEnv("INTERNAL_MONGODB_S3_BUCKET_NAME");
     try {
         // Connect to MongoDB
         const db = await connectToDatabase();
@@ -32,8 +35,8 @@ async function MongoDBDatabaseDailySnapshot() {
             const fileName = `${year}-${month}-${day}/${collectionName}.json`;
 
             // Upload JSON data to S3
-            const uploadParams = {
-                Bucket: process.env.INTERNAL_MONGODB_S3_BUCKET_NAME,
+            const uploadParams: PutObjectCommandInput = {
+                Bucket: bucketName,
                 Key: fileName,
                 Body: jsonData,
                 ContentType: "application/json"
@@ -42,7 +45,7 @@ async function MongoDBDatabaseDailySnapshot() {
             await s3Client.send(putObjectCommand);
 
             console.log(
-                `Successfully backed up collection ${collectionName} to ${fileName} in bucket ${process.env.INTERNAL_MONGODB_S3_BUCKET_NAME}`
+                `Successfully backed up collection ${collectionName} to ${fileName} in bucket ${bucketName}`
             );
         });
         await Promise.all(backupPromises);
@@ -51,5 +54,3 @@ async function MongoDBDatabaseDailySnapshot() {
         throw error;
     }
 }
-
-module.exports = { MongoDBDatabaseDailySnapshot };

@@ -7,8 +7,9 @@
     "scripts": {
         "clean": "rm -rf build dist cdk.out node_modules",
         "build": "tsc",
-        "lint": "eslint --cache lambda lib test constants && prettier --list-different --cache .",
-        "lint:fix": "eslint --fix",
+        "typecheck": "tsc --noEmit",
+        "lint": "eslint --cache bin configuration constants constructs lambda lib test types && prettier --list-different --cache .",
+        "lint:fix": "eslint --fix bin configuration constants constructs lambda lib test types",
         "format": "prettier --write --cache .",
         "prebuild": "rm -rf build dist cdk.out",
         "watch": "tsc -w",
@@ -18,20 +19,20 @@
         "pre-commit": "lint-staged"
     },
     "lint-staged": {
-        "**/*.js": [
+        "**/*.{ts,mts,js,mjs}": [
             "prettier --write",
-            "eslint --fix --cache lambda lib test constants",
-            "git add ."
+            "eslint --fix --cache"
+        ],
+        "**/*.{json,md,yaml,yml}": [
+            "prettier --write"
         ]
     },
     "devDependencies": {
-        "@babel/eslint-parser": "^7.25.9",
-        "@babel/preset-env": "^7.26.0",
-        "@babel/preset-typescript": "^7.26.0",
         "@eslint/eslintrc": "^3.2.0",
         "@eslint/js": "^9.17.0",
         "@types/jest": "^29.5.12",
         "@types/node": "20.14.9",
+        "@types/nodemailer": "^6.4.17",
         "@typescript-eslint/eslint-plugin": "^8.19.0",
         "@typescript-eslint/parser": "^8.19.0",
         "aws-cdk": "^2.1019.1",

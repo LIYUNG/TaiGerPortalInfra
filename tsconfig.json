@@ -20,7 +20,20 @@
         "esModuleInterop": true,
         "experimentalDecorators": true,
         "strictPropertyInitialization": false,
+        "forceConsistentCasingInFileNames": true,
+        "skipLibCheck": true,
+        "resolveJsonModule": true,
         "typeRoots": ["./node_modules/@types"]
     },
+    "include": [
+        "bin/**/*.ts",
+        "lib/**/*.ts",
+        "lambda/**/*.ts",
+        "constructs/**/*.ts",
+        "configuration/**/*.ts",
+        "constants/**/*.ts",
+        "types/**/*.ts",
+        "test/**/*.ts"
+    ],
     "exclude": ["node_modules", "cdk.out", "dist"]
 }

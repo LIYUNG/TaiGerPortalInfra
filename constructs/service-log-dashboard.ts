@@ -1,8 +1,4 @@
 import { LogQueryWidget, TextWidget } from "aws-cdk-lib/aws-cloudwatch";
-// `Dashboard` is used only as a function-parameter type annotation, which the
-// Babel eslint parser does not track as a usage (unlike interface-property types
-// such as `IWidget`), so no-unused-vars false-positives on it.
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import type { Dashboard, IWidget } from "aws-cdk-lib/aws-cloudwatch";
 
 export interface ServiceLogSectionExtraQuery {

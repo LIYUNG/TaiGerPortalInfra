@@ -1,8 +1,8 @@
-const { TENANT_PORTAL_LINK, TAIGER_SIGNATURE } = require("../utils/constants");
+import { TENANT_PORTAL_LINK, TAIGER_SIGNATURE } from "../utils/constants";
 
-const SPLIT_LINE = "-------------------------------------------------------";
+export const SPLIT_LINE = "-------------------------------------------------------";
 
-const htmlContent = (message) => `
+export const htmlContent = (message: string): string => `
 <!DOCTYPE html>
 <html>
 <head>
@@ -116,5 +116,3 @@ const htmlContent = (message) => `
 </body>
 </html>
 `;
-
-module.exports = { htmlContent, SPLIT_LINE };

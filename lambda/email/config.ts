@@ -1,14 +1,15 @@
-const { createTransport } = require("nodemailer");
-const Bottleneck = require("bottleneck/es5");
+import { createTransport, SentMessageInfo, Transporter } from "nodemailer";
+import Bottleneck from "bottleneck/es5";
 
-const { htmlContent } = require("./email-template");
-const { ses, SendRawEmailCommand } = require("../aws");
+import { htmlContent } from "./email-template";
+import { ses, SendRawEmailCommand } from "../aws";
+import { Recipient } from "./types";
 
 const senderEmail = "no-reply@taigerconsultancy-portal.com";
 const taigerNotReplyGmail = "noreply.taigerconsultancy@gmail.com";
 const senderName = `No-Reply TaiGer Consultancy ${senderEmail}`;
 
-const transporter = createTransport({
+export const transporter: Transporter<SentMessageInfo> = createTransport({
     SES: { ses, aws: { SendRawEmailCommand } }
 });
 
@@ -16,10 +17,14 @@ const limiter = new Bottleneck({
     minTime: 1100 / 14
 });
 
-const sendEmail = async (to, subject, message) => {
+export const sendEmail = async (
+    to: Recipient,
+    subject: string,
+    message: string
+): Promise<SentMessageInfo> => {
     const mail = {
         from: senderName,
-        to,
+        to: to.address,
         bcc: taigerNotReplyGmail,
         subject,
         html: htmlContent(message)
@@ -27,5 +32,3 @@ const sendEmail = async (to, subject, message) => {
 
     return limiter.schedule(() => transporter.sendMail(mail));
 };
-
-module.exports = { transporter, sendEmail };

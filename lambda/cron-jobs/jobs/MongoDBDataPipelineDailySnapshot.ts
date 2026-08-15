@@ -1,12 +1,17 @@
-const { PutObjectCommand } = require("@aws-sdk/client-s3");
-const { connectToDatabase } = require("../../db");
-const { s3Client } = require("../../aws");
-const { transformDocument } = require("../../common/utils");
+import { PutObjectCommand, PutObjectCommandInput } from "@aws-sdk/client-s3";
+import type { Document, WithId } from "mongodb";
+
+import { connectToDatabase } from "../../db";
+import { s3Client } from "../../aws";
+import { transformDocument } from "../../common/utils";
+import { requireEnv } from "../../common/env";
 
 const allowList = ["communications", "courses", "programs", "users"];
 const tenfoldFolder = "tenfold-ai-folder";
-async function MongoDBDataPipelineDailySnapshot() {
+
+export async function MongoDBDataPipelineDailySnapshot(): Promise<void> {
     console.log("Executing tasks for Job MongoDBDataPipelineDailySnapshot...");
+    const bucketName = requireEnv("EXTERNAL_S3_BUCKET_NAME");
     try {
         // Connect to MongoDB
         const db = await connectToDatabase();
@@ -27,7 +32,7 @@ async function MongoDBDataPipelineDailySnapshot() {
                 const collection = db.collection(collectionName);
 
                 // Fetch all documents in the collection
-                let documents;
+                let documents: WithId<Document>[];
                 if (collectionName === "users") {
                     documents = await collection
                         .find(
@@ -54,8 +59,8 @@ async function MongoDBDataPipelineDailySnapshot() {
                 const fileName = `${tenfoldFolder}/${year}-${month}-${day}/${collectionName}.json`;
 
                 // Upload JSON data to S3
-                const uploadParams = {
-                    Bucket: process.env.EXTERNAL_S3_BUCKET_NAME,
+                const uploadParams: PutObjectCommandInput = {
+                    Bucket: bucketName,
                     Key: fileName,
                     Body: jsonData,
                     ContentType: "application/json"
@@ -64,7 +69,7 @@ async function MongoDBDataPipelineDailySnapshot() {
                 await s3Client.send(putObjectCommand);
 
                 console.log(
-                    `Successfully backed up collection ${collectionName} to ${fileName} in bucket ${process.env.EXTERNAL_S3_BUCKET_NAME}`
+                    `Successfully backed up collection ${collectionName} to ${fileName} in bucket ${bucketName}`
                 );
             });
         await Promise.all(backupPromises);
@@ -73,5 +78,3 @@ async function MongoDBDataPipelineDailySnapshot() {
         throw error;
     }
 }
-
-module.exports = { MongoDBDataPipelineDailySnapshot };
