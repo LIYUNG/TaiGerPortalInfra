@@ -1,15 +1,16 @@
 import * as cdk from "aws-cdk-lib";
 import { Duration, RemovalPolicy, SecretValue } from "aws-cdk-lib";
 import {
+    CodeBuildStep,
     CodePipeline,
     CodePipelineSource,
-    ManualApprovalStep,
-    ShellStep
+    ManualApprovalStep
 } from "aws-cdk-lib/pipelines";
 import { PipelineType } from "aws-cdk-lib/aws-codepipeline";
 import * as codepipeline_actions from "aws-cdk-lib/aws-codepipeline-actions";
-import { LinuxBuildImage } from "aws-cdk-lib/aws-codebuild";
+import { BuildSpec, LinuxBuildImage } from "aws-cdk-lib/aws-codebuild";
 import {
+    APP_NAME,
     GITHUB_OWNER,
     GITHUB_PACKAGE_BRANCH,
     GITHUB_REPO,
@@ -20,6 +21,7 @@ import { STAGES } from "../constants";
 import { PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { Construct } from "constructs";
 import { BlockPublicAccess, Bucket, BucketEncryption } from "aws-cdk-lib/aws-s3";
+import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
 
 export class TaiGerPortalInfraStack extends cdk.Stack {
     constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -34,6 +36,41 @@ export class TaiGerPortalInfraStack extends cdk.Stack {
                 trigger: codepipeline_actions.GitHubTrigger.WEBHOOK
             }
         );
+
+        const synthStep = new CodeBuildStep("Synth", {
+            input: source,
+            commands: [
+                "npm ci",
+                // The Lambda sources are TypeScript now and are bundled by
+                // esbuild inside `cdk synth`, which does no type checking.
+                // Type-check, lint and unit-test them here so a broken
+                // handler fails the build instead of shipping.
+                "npm run typecheck",
+                "npm run lint",
+                "npm run test",
+                "npm run build",
+                "npx cdk synth"
+            ],
+            logging: {
+                cloudWatch: {
+                    logGroup: new LogGroup(this, `${APP_NAME}Synth-LogGroup`, {
+                        logGroupName: `/aws/codepipeline/synth/${APP_NAME}`,
+                        retention: RetentionDays.SIX_MONTHS,
+                        removalPolicy: RemovalPolicy.DESTROY
+                    })
+                }
+            },
+            partialBuildSpec: BuildSpec.fromObject({
+                version: "0.2",
+                phases: {
+                    install: {
+                        "runtime-versions": {
+                            nodejs: 22
+                        }
+                    }
+                }
+            })
+        });
 
         // Create the high-level CodePipeline
         const pipeline = new CodePipeline(this, "Pipeline", {
@@ -53,21 +90,7 @@ export class TaiGerPortalInfraStack extends cdk.Stack {
                     }
                 ]
             }),
-            synth: new ShellStep("Synth", {
-                input: source,
-                commands: [
-                    "npm ci",
-                    // The Lambda sources are TypeScript now and are bundled by
-                    // esbuild inside `cdk synth`, which does no type checking.
-                    // Type-check, lint and unit-test them here so a broken
-                    // handler fails the build instead of shipping.
-                    "npm run typecheck",
-                    "npm run lint",
-                    "npm run test",
-                    "npm run build",
-                    "npx cdk synth"
-                ]
-            }),
+            synth: synthStep,
             codeBuildDefaults: {
                 // `NodejsFunction` shells out to esbuild during synth; pin an
                 // image whose Node runtime is new enough for it and for the

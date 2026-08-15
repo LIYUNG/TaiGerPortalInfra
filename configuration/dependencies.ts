@@ -4,6 +4,7 @@ export const GITHUB_TOKEN =
 export const GITHUB_REPO = "TaiGerPortalInfra";
 export const GITHUB_OWNER = "LIYUNG";
 export const GITHUB_PACKAGE_BRANCH = "main";
+export const APP_NAME = "TaiGerPortalInfra";
 
 export const AWS_ACCOUNT = "669131042313";
 export const DOMAIN_NAME = "taigerconsultancy-portal.com";
