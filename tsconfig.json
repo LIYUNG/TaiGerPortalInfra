@@ -21,6 +21,13 @@
         "experimentalDecorators": true,
         "strictPropertyInitialization": false,
         "forceConsistentCasingInFileNames": true,
+        // Each file must be transpilable on its own. Both of our compilers
+        // already work that way — esbuild bundles the Lambda file-by-file, and
+        // it lets ts-jest transpile instead of building a full TypeScript
+        // program per worker. That program (aws-cdk-lib's type surface is
+        // enormous) was ~900MB and was OOM-killing the CodeBuild synth step.
+        // Type checking is not lost: `npm run typecheck` does it properly.
+        "isolatedModules": true,
         "skipLibCheck": true,
         "resolveJsonModule": true,
         "typeRoots": ["./node_modules/@types"]
