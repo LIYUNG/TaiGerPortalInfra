@@ -1,6 +1,11 @@
 import * as cdk from "aws-cdk-lib";
 import { Duration, RemovalPolicy, SecretValue } from "aws-cdk-lib";
-import { CodePipeline, CodePipelineSource, ShellStep } from "aws-cdk-lib/pipelines";
+import {
+    CodePipeline,
+    CodePipelineSource,
+    ManualApprovalStep,
+    ShellStep
+} from "aws-cdk-lib/pipelines";
 import { PipelineType } from "aws-cdk-lib/aws-codepipeline";
 import * as codepipeline_actions from "aws-cdk-lib/aws-codepipeline-actions";
 import { LinuxBuildImage } from "aws-cdk-lib/aws-codebuild";
@@ -106,7 +111,18 @@ export class TaiGerPortalInfraStack extends cdk.Stack {
                     internalMongodbS3BucketName,
                     origin
                 });
-                pipeline.addStage(stage);
+                if (isProd) {
+                    pipeline.addStage(stage, {
+                        pre: [
+                            new ManualApprovalStep("ApproveIfStable", {
+                                comment:
+                                    "Approve to continue production deployment. Make sure every changes are verified in dev."
+                            })
+                        ]
+                    });
+                } else {
+                    pipeline.addStage(stage);
+                }
             }
         );
     }

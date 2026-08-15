@@ -59,6 +59,6 @@ export class PipelineAppStage extends Stage {
             serviceStageName: props.domainStage
         });
 
-        serviceStack.addDependency(infraStack);
+        serviceStack.addStackDependency(infraStack);
     }
 }
